@@ -10,6 +10,10 @@ tasks, use judgment.
 - pipeline: for user-facing scripts, should be linked to a pixi task.
 - plots: scripts producing publication-ready plots
 - scripts: for installation
+- configs: TOML settings files (paths, parameters), one per environment (e.g.
+  here vs. the client's server) or per model
+- notes: internal notes, for the user and Claude only (gitignored)
+- docs: documentation for the client
 - Use pixi for python, never native python
 - Never put Claude as co-author
 - For commits, ask whether to commit directly on main or in a new branch
