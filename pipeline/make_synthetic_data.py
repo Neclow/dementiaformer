@@ -15,7 +15,8 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
-RAW = Path("data/raw")
+from src._config import DEFAULT_RAW_DIR
+
 # Folder inside synthetic.zip that holds the person and migration files
 ZIP_FOLDER = (
     "synthetic/data/workdata/709816/Personal folders/Mathilde/Projects/"
@@ -24,12 +25,22 @@ ZIP_FOLDER = (
 # Last register date, as in 5 predictions.R
 REGISTER_END = dt.date(2022, 12, 31)
 # The dementia codes of make_synthetic_data.R
-# fmt: off
 DEMENTIA_CODES = [
-    "F000", "F001", "F009", "F010", "F019", "F020", "F039",
-    "G30", "G301", "G309", "G318B", "G318E", "G319", "G310B",
+    "F000",
+    "F001",
+    "F009",
+    "F010",
+    "F019",
+    "F020",
+    "F039",
+    "G30",
+    "G301",
+    "G309",
+    "G318B",
+    "G318E",
+    "G319",
+    "G310B",
 ]
-# fmt: on
 # Share of "out_after_65" movers in make_synthetic_data.R
 EMIGRATION_SHARE = 0.03
 SEED = 709816
@@ -37,7 +48,7 @@ SEED = 709816
 
 def read_from_zip(name: str) -> pl.DataFrame:
     """Read one parquet file of synthetic.zip."""
-    with zipfile.ZipFile(RAW / "synthetic.zip") as archive:
+    with zipfile.ZipFile(DEFAULT_RAW_DIR / "synthetic.zip") as archive:
         return pl.read_parquet(io.BytesIO(archive.read(ZIP_FOLDER + name)))
 
 
@@ -84,7 +95,7 @@ def main() -> None:
     )
     # Contact columns only
     contacts = (
-        pl.read_parquet(RAW / "df_born1923_1943.parquet")
+        pl.read_parquet(DEFAULT_RAW_DIR / "df_born1923_1943.parquet")
         .select("PNR", "INDATE", "OUTDATE", "DIAG", "DIAG_TYPE", "PATIENT_TYPE")
         .filter(pl.col("INDATE").is_not_null(), pl.col("DIAG").is_not_null())
     )
