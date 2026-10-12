@@ -1,0 +1,40 @@
+# `pre-commit install` installs both git hooks; hooks run on commit unless they set `stages`
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+repos:
+  # Same as VS Code save: trim trailing whitespace, isort, black
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+  - repo: https://github.com/pycqa/isort
+    rev: 9.0.2
+    hooks:
+      - id: isort
+        args: [--profile, black, --lines-between-types, "1"]
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 26.10.0
+    hooks:
+      - id: black
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "v4.0.0-alpha.8"
+    hooks:
+      - id: prettier
+        types_or: [markdown]
+        args: [--prose-wrap=always]
+  # Runs in the pixi env so third-party imports resolve
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty
+        entry: pixi run ty check
+        language: system
+        pass_filenames: false
+        types: [python]
+      - id: pytest
+        name: pytest
+        entry: pixi run test
+        language: system
+        pass_filenames: false
+        types: [python]
+        stages: [pre-push]
