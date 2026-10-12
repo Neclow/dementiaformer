@@ -2,7 +2,7 @@
 authors = ["Neclow <neilclow24@gmail.com>"]
 channels = ["conda-forge"]
 name = "dementia"
-platforms = ["linux-64"]
+platforms = ["linux-64", "win-64"]
 version = "0.1.0"
 
 [tasks]
@@ -17,5 +17,5 @@ ty = ">=0.0.86,<0.0.87"
 transformers = "==5.17"
 torch = "==2.13"
 numpy = "==2.5"
-lightning = ">=2.6.6, <3"
+lightning = "==2.6.6"
 polars = ">=2.0.0, <3"

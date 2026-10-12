@@ -1,0 +1,19 @@
+# Packages this project needs on top of the existing conda environment on the
+# server. That environment already has python, numpy, torch and transformers,
+# at the versions pinned in pixi.toml. Conda and pip fetch from the server's
+# internal mirrors.
+#
+# Install into the existing environment (replace <environment> by its name):
+#
+#   conda env update -n <environment> -f scripts/environment.yml
+#
+# Packages already installed at a matching version are left as they are.
+#
+# Kept in step with pixi.toml: every package added there is either already on
+# the server or listed here. Development tools (pytest, pre-commit, ty) are not
+# listed: the client does not need them.
+dependencies:
+  - pip
+  - pip:
+      - lightning==2.6.6
+      - polars>=2.0.0,<3
