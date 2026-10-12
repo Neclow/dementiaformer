@@ -125,6 +125,18 @@ def test_split_labels():
     assert persons["SPLIT"].to_list() == ["train", "validation", "test"]
 
 
+def test_split_fingerprint_follows_the_content_not_the_row_order():
+    split = inputs(
+        [person("P1", "train"), person("P2", "validation"), person("P3", "test")]
+    ).split
+    fingerprint = tokens.split_fingerprint(split)
+    assert tokens.split_fingerprint(split.reverse()) == fingerprint
+    moved = split.with_columns(
+        fold=pl.when(pl.col("PNR") == "P1").then(2).otherwise(pl.col("fold"))
+    )
+    assert tokens.split_fingerprint(moved) != fingerprint
+
+
 def test_people_missing_from_the_split_file_are_an_error():
     data = inputs([person("P1")])
     with pytest.raises(ValueError, match="missing from the split file"):

@@ -35,7 +35,7 @@ the same with `configs/data_synthetic.toml`.
 | `events.parquet`  | `PNR`, `AGE_DAYS`, `TOKEN`: every person's timeline                                                                           |
 | `persons.parquet` | `PNR`, `SPLIT` (train, validation or test), `INDEX_AGE_DAYS`, `OBSERVED_UNTIL_AGE_DAYS` (the age at which the timeline stops) |
 | `vocab.csv`       | `TOKEN`, `NAME`, `KIND`, `CHAPTER`, and `N_TRAIN_PEOPLE` (the number of training people with each code)                       |
-| `settings.json`   | the settings the folder was built with                                                                                        |
+| `settings.json`   | the settings the folder was built with, and the fingerprint of the split (see decision 5)                                     |
 
 `events.parquet` and `persons.parquet` are microdata and must stay on the
 server.
@@ -114,6 +114,12 @@ Where we differ, and why:
    - Test people's timelines stop before the index age, so their outcome can
      never reach the model. The script stops with an error if a test person has
      an event from the index date on.
+   - **The split must not change once the tokens are built.** If it did, some of
+     the new test people would have trained the model. `settings.json` keeps a
+     fingerprint of the split's content, so that training and embedding can
+     check it: rebuild the tokens and retrain if it differs. The split is drawn
+     with a fixed seed from the tabular file of `3 strings.R`, so it only
+     changes if that file does.
 6. **Parquet files.** Delphi writes a raw binary file. Parquet can be opened in
    R, and the data fits in memory.
 7. **Token numbers are stored as the model uses them**: 0 is padding and 1 is

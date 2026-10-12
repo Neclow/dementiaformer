@@ -7,7 +7,8 @@ into <output>/<variant>/:
     events.parquet   PNR, AGE_DAYS, TOKEN: every person's timeline
     persons.parquet  PNR, SPLIT, INDEX_AGE_DAYS, OBSERVED_UNTIL_AGE_DAYS
     vocab.csv        TOKEN, NAME, KIND, CHAPTER, N_TRAIN_PEOPLE
-    settings.json    the settings the folder was built with
+    settings.json    the settings the folder was built with, and the
+                     fingerprint of the split (src/tokens.py:split_fingerprint)
 
 and prints totals for checking. events.parquet and persons.parquet hold one row
 per event or person: they are microdata and stay on the server.
@@ -60,10 +61,17 @@ def main() -> None:
     ]
     if not variants:
         parser.error(f"no variant {args.variant!r} in {args.config}")
+    if not paths["split"].exists():
+        parser.error(
+            f"no split file at {paths['split']}. The split is drawn by "
+            "5 predictions.R: run it up to the line that writes "
+            "age70_split_and_folds.parquet first (see docs/tokens.md)"
+        )
 
     # The inputs, the people and their whole timelines are the same for every
     # variant, so they are built once
     inputs = tokens.load_inputs(paths)
+    split_fingerprint = tokens.split_fingerprint(inputs.split)
     persons = tokens.build_persons(inputs.persons, inputs.split, settings)
     timelines = tokens.build_timelines(
         inputs.contacts, inputs.migration, persons, settings
@@ -96,6 +104,7 @@ def main() -> None:
             "config": str(args.config),
             "settings": asdict(settings),
             "variant": asdict(variant),
+            "split_fingerprint": split_fingerprint,
         }
         (folder / "settings.json").write_text(
             json.dumps(built_with, indent=2, default=str), encoding="utf-8"

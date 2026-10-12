@@ -17,6 +17,8 @@ Steps 1 to 3 do not depend on the variant: build_tokens runs them once. The
 decisions behind each step are explained in docs/tokens.md.
 """
 
+import hashlib
+
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
@@ -147,6 +149,20 @@ def load_inputs(paths: Mapping[str, Path]) -> Inputs:
         )
 
     return Inputs(read("contacts"), read("persons"), read("migration"), read("split"))
+
+
+def split_fingerprint(split: pl.DataFrame) -> str:
+    """A fingerprint of the split's content: the same split always gives the same one.
+
+    The tokens, the model trained on them and its embeddings are only valid
+    with the split they were built with: if script 5 later draws another split,
+    some of its test people would have trained the model. build_tokens saves
+    this fingerprint in settings.json so that later steps can check it. It is
+    computed from the rows sorted by PNR, so rewriting the same split (another
+    row order, another parquet writer) keeps it.
+    """
+    rows = split.select("PNR", "in_training", "fold").sort("PNR").write_csv()
+    return hashlib.sha256(rows.encode()).hexdigest()
 
 
 def age_days(date_column: str) -> pl.Expr:
