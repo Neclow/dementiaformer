@@ -228,5 +228,5 @@ tmp/
 notes/
 
 # Data
-data/
+data/**
 !data/README.md
