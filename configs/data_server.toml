@@ -1,0 +1,52 @@
+# Settings of the tokeniser (pipeline/build_tokens.py) on the client's server,
+# with the paths of 3 strings.R and 5 predictions.R. configs/data_synthetic.toml
+# has the same settings for the synthetic data. The decisions behind
+# them are in docs/tokens.md.
+
+[paths]
+# The outputs of the client's preprocessing (script 2): one row per hospital
+# contact, one per person, one per border crossing; and the split of
+# 5 predictions.R
+contacts = "E:/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947.parquet"
+persons = "E:/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947_short.parquet"
+migration = "E:/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947_migration.parquet"
+split = "E:/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_split_and_folds.parquet"
+# One folder per variant (below) is written in here
+output = "E:/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/tokens"
+
+# Shared by every variant
+[settings]
+index_age = 70                       # age at which prediction starts
+earliest_register_date = 1969-01-01  # no event before this date, as in 3 strings.R
+register_end_date = 2022-12-31       # the registers end here, as in 5 predictions.R
+minimum_spell_days = 180             # a shorter period abroad gets no token, as in 3 strings.R
+min_people_per_code = 5              # a code in fewer training people shares its chapter's token
+validation_fold = 5                  # the fold of 5 predictions.R held out to validate the model
+first_occurrence_only = true         # each code is kept at its first occurrence only, as in Delphi
+
+# Dementia codes, by subtype: a code is a dementia code when it starts with one
+# of these. They are left out of the diagnoses, because dementia enters as its
+# own token at DEMENTIA_INCIDENT_DATE, and the person's first one gives the
+# subtype (UNSPECIFIED without any). Taken from make_synthetic_data.R: TO CHECK
+# against the client's definition in script 2.
+[settings.dementia_subtypes]
+ALZHEIMER = ["F00", "G30"]
+VASCULAR = ["F01"]
+OTHER = ["F02", "G310", "G318", "G319"]
+UNSPECIFIED = ["F03"]
+
+# One folder of tokens each. dementia: "single" (one DEMENTIA token, the
+# client's outcome) or "subtype" (one token per subtype). cut_at_index: false
+# keeps training people's whole lives; true stops everyone's timeline before
+# the index age, so the model never sees what happens after it. Test people's
+# timelines always stop before the index age.
+[variants.whole_lives]
+dementia = "single"
+cut_at_index = false
+
+[variants.whole_lives_subtype]
+dementia = "subtype"
+cut_at_index = false
+
+[variants.cut_at_index]
+cut_at_index = true
