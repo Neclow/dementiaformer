@@ -7,6 +7,7 @@ version = "0.1.0"
 
 [tasks]
 build_tokens_all = "python -m pipeline.build_tokens --config configs/data_synthetic.toml"
+test = "python -m pytest tests"
 
 [dependencies]
 python = "==3.14.7"
