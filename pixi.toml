@@ -9,6 +9,7 @@ version = "0.1.0"
 build_tokens = "python -m pipeline.build_tokens"
 train_torch = "python -m pipeline.train_torch"
 train_lightning = "python -m pipeline.train_lightning"
+extract_embeddings = "python -m pipeline.extract_embeddings"
 test = "python -m pytest tests"
 # Benchmarks of speed: results saved in benchmarks/results/<machine>/
 benchmark = "python -m pytest benchmarks --benchmark-storage=benchmarks/results --benchmark-autosave"

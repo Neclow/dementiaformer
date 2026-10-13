@@ -31,10 +31,16 @@ class DelphiV2Motorhead(nn.Module):
         )
         init_weights(self, config.n_layer)
 
+    def hidden(
+        self, tokens: Tensor, ages: Tensor, target_ages: Tensor | None = None
+    ) -> Tensor:
+        """Hidden states after the last block: (batch, token, width)."""
+        return self.backbone(tokens, ages, target_ages)
+
     def forward(
         self, tokens: Tensor, ages: Tensor, target_ages: Tensor | None = None
     ) -> Tensor:
         """Log hazards after each token: (batch, token, bin, vocabulary)."""
-        hidden = self.backbone(tokens, ages, target_ages)
+        hidden = self.hidden(tokens, ages, target_ages)
         bins = self.bin_head(hidden).unflatten(-1, (self.n_bins, -1))
         return bins @ self.backbone.wte.weight.T

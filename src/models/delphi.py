@@ -97,14 +97,20 @@ class Delphi(nn.Module):
         self.wte.weight = self.lm_head.weight
         init_weights(self, config.n_layer)
 
-    def forward(
+    def hidden(
         self, tokens: Tensor, ages: Tensor, target_ages: Tensor | None = None
     ) -> Tensor:
-        """Log rates of the next event: (batch, token, vocabulary)."""
+        """Hidden states after the last block: (batch, token, width)."""
         x = self.drop(self.token_drop(self.wte(tokens)) + self.wae(ages))
         mask = attention_mask(
             tokens, ages, target_ages if self.config.mask_ties else None
         )
         for block in self.h:
             x = block(x, mask)
-        return self.lm_head(self.ln_f(x))
+        return self.ln_f(x)
+
+    def forward(
+        self, tokens: Tensor, ages: Tensor, target_ages: Tensor | None = None
+    ) -> Tensor:
+        """Log rates of the next event: (batch, token, vocabulary)."""
+        return self.lm_head(self.hidden(tokens, ages, target_ages))

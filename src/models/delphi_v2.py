@@ -145,8 +145,14 @@ class DelphiV2(nn.Module):
         self.backbone.wte.weight = self.lm_head.weight
         init_weights(self, config.n_layer)
 
+    def hidden(
+        self, tokens: Tensor, ages: Tensor, target_ages: Tensor | None = None
+    ) -> Tensor:
+        """Hidden states after the last block: (batch, token, width)."""
+        return self.backbone(tokens, ages, target_ages)
+
     def forward(
         self, tokens: Tensor, ages: Tensor, target_ages: Tensor | None = None
     ) -> Tensor:
         """Log rates of the next event: (batch, token, vocabulary)."""
-        return self.lm_head(self.backbone(tokens, ages, target_ages))
+        return self.lm_head(self.hidden(tokens, ages, target_ages))

@@ -19,8 +19,10 @@ from src.settings import read_data_settings, read_model_settings
 from src.training.batches import Batch, RandomBatches, read_timelines
 from src.training.losses import NO_EVENT, delphi_loss, motor_loss
 
+# Any of the three models
+Model = Delphi | DelphiV2 | DelphiV2Motorhead
 # Each model's class and settings class, by the name of its settings file
-MODELS: dict[str, tuple[type[nn.Module], type]] = {
+MODELS: dict[str, tuple[type[Model], type]] = {
     "delphi": (Delphi, DelphiConfig),
     "delphi_v2": (DelphiV2, DelphiV2Config),
     "delphi_v2_motorhead": (DelphiV2Motorhead, DelphiV2MotorheadConfig),
@@ -72,9 +74,7 @@ def batch_streams(folder: Path, settings: TrainingSettings) -> dict[str, RandomB
     }
 
 
-def build_model(
-    name: str, model_settings: dict[str, Any], vocab_size: int
-) -> nn.Module:
+def build_model(name: str, model_settings: dict[str, Any], vocab_size: int) -> Model:
     """A new model, from the model section of its settings file."""
     model_class, config_class = MODELS[name]
     return model_class(config_class(vocab_size=vocab_size, **model_settings))
