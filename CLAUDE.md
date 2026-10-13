@@ -10,8 +10,8 @@ tasks, use judgment.
 - pipeline: for user-facing scripts, should be linked to a pixi task.
 - plots: scripts producing publication-ready plots
 - environment.yml (root): for installation on the user's server
-- configs: TOML settings files (paths, parameters), one per environment (e.g.
-  here vs. the client's server) or per model
+- configs: YAML settings files. data/: one per environment (here vs. the user's
+  server); models/: one per model
 - notes: internal notes, for the user and Claude only (gitignored)
 - docs: documentation for the client
 - Use pixi for python, never native python

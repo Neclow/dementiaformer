@@ -5,8 +5,11 @@ import datetime as dt
 from pathlib import Path
 from typing import Any, Final
 
-# Folder of the settings files, relative to the repository root
+# Folder of the settings files, relative to the repository root: of the data
+# (one per environment: synthetic or server) and of the models
 DEFAULT_CONFIG_DIR: Final = Path("configs")
+DATA_CONFIG_DIR: Final = DEFAULT_CONFIG_DIR / "data"
+MODEL_CONFIG_DIR: Final = DEFAULT_CONFIG_DIR / "models"
 # Last register date, as in 5 predictions.R
 REGISTER_END: Final = dt.date(2022, 12, 31)
 # The 22 ICD-10 chapters, as in 3 strings.R: (first code, last code, name). A

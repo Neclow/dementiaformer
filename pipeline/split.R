@@ -17,7 +17,9 @@ arguments <- commandArgs(trailingOnly = TRUE)
 if (length(arguments) < 1) {
   stop("Name the settings file: Rscript pipeline/split.R synthetic (or server)")
 }
-config <- yaml::read_yaml(file.path("configs", paste0(arguments[1], ".yaml")))
+config <- yaml::read_yaml(
+  file.path("configs", "data", paste0(arguments[1], ".yaml"))
+)
 # Input: the tabular file of the user's script 3, as in 5 predictions.R
 input <- paste0(config$root, config$paths$tabular)
 output <- paste0(config$root, config$paths$split)

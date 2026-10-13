@@ -1,8 +1,8 @@
-# Settings of the pipeline on the user's server. configs/synthetic.yaml has
-# the same settings: only root differs.
+# Settings of the pipeline on the user's synthetic data.
+# configs/data/server.yaml has the same settings: only root differs.
 
 # Folder of the files below, with a trailing slash
-root: E:/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/
+root: data/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/
 # Age at which prediction starts (the file names below contain it)
 index_age: 70
 
@@ -17,6 +17,8 @@ paths:
   split: age70_split_and_folds.parquet
   # Made by build_tokens.py: a folder
   tokens: tokens
+  # Made by train_torch.py: a folder per model and variant
+  runs: runs
   # Delphi's vocabulary, labels.csv of github.com/gerstung-lab/Delphi at
   # commit fb72166 (data/ukb_real_data/labels.csv)
   delphi_labels: ../Delphi/labels.csv

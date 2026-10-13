@@ -1,8 +1,8 @@
 # Data
 
 Not in git, apart from this README. Laid out as on the user's server (`E:/`), so
-that `configs/synthetic.yaml` and `configs/server.yaml` differ only in their
-`root`.
+that `configs/data/synthetic.yaml` and `configs/data/server.yaml` differ only in
+their `root`.
 
 - `raw/`: an inbox for new data from the user. Files are moved from here to
   where they live on the server.

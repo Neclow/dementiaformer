@@ -1,12 +1,11 @@
 """Build the timelines the models read: every person's events with their ages."""
 
 from argparse import ArgumentParser, Namespace
-from pathlib import Path
 
 import polars as pl
-import yaml
 
-from src._config import DEFAULT_CONFIG_DIR, VARIANTS
+from src._config import VARIANTS
+from src.settings import read_data_settings
 from src.timelines import make_persons, make_timelines
 from src.tokens import (
     cut_at_index,
@@ -24,17 +23,14 @@ def parse_args() -> Namespace:
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
         "config",
-        help="settings file in configs/, without .yaml: synthetic or server",
+        help="settings file in configs/data/, without .yaml: synthetic or server",
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    with open(DEFAULT_CONFIG_DIR / f"{args.config}.yaml") as file:
-        config = yaml.safe_load(file)
-    root = Path(config["root"])
-    paths = {name: root / path for name, path in config["paths"].items()}
+    config, paths = read_data_settings(args.config)
 
     print("Reading the data...", end=" ")
     # One row per person (script 2): PNR, SEX, BIRTH_DATE, DEATH_DATE,
