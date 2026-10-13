@@ -5,7 +5,7 @@
 #
 # Install into the existing environment (replace <environment> by its name):
 #
-#   conda env update -n <environment> -f scripts/environment.yml
+#   conda env update -n <environment> -f environment.yml
 #
 # Packages already installed at a matching version are left as they are.
 #
@@ -18,3 +18,4 @@ dependencies:
   - pip:
       - lightning==2.6.6
       - polars>=2.0.0,<3
+      - torchinfo>=1.8.0,<2

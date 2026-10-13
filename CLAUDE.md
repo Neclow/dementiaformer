@@ -9,7 +9,7 @@ tasks, use judgment.
 - src: for source code
 - pipeline: for user-facing scripts, should be linked to a pixi task.
 - plots: scripts producing publication-ready plots
-- scripts: for installation
+- environment.yml (root): for installation on the user's server
 - configs: TOML settings files (paths, parameters), one per environment (e.g.
   here vs. the client's server) or per model
 - notes: internal notes, for the user and Claude only (gitignored)
