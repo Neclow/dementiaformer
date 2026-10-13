@@ -12,13 +12,13 @@ cross_validation_folds <- 5
 # Random seed, as in 5 predictions.R
 SEED <- 709816
 
-# Paths from the settings file given on the command line, configs/server.yaml
-# by default (e.g. from RStudio)
+# Paths from the settings file named on the command line: synthetic or server
 arguments <- commandArgs(trailingOnly = TRUE)
-config <- yaml::read_yaml(
-  if (length(arguments) >= 1) arguments[1] else "configs/server.yaml"
-)
-# Input: the tabular file of strings.R, as in 5 predictions.R
+if (length(arguments) < 1) {
+  stop("Name the settings file: Rscript pipeline/split.R synthetic (or server)")
+}
+config <- yaml::read_yaml(file.path("configs", paste0(arguments[1], ".yaml")))
+# Input: the tabular file of the user's script 3, as in 5 predictions.R
 input <- paste0(config$root, config$paths$tabular)
 output <- paste0(config$root, config$paths$split)
 

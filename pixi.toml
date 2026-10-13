@@ -6,7 +6,7 @@ platforms = ["linux-64", "win-64"]
 version = "0.1.0"
 
 [tasks]
-build_tokens = "python -m pipeline.build_tokens --config configs/synthetic.yaml"
+build_tokens = "python -m pipeline.build_tokens"
 test = "python -m pytest tests"
 
 [dependencies]
@@ -31,7 +31,7 @@ r-tidyverse = ">=2.0.0,<3"
 
 [feature.r.tasks]
 # Step 5a on the synthetic data (pipeline/split.R)
-split = "Rscript pipeline/split.R configs/synthetic.yaml"
+split = "Rscript pipeline/split.R"
 
 [environments]
 r = { features = ["r"], no-default-feature = true }

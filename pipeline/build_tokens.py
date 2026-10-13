@@ -240,17 +240,14 @@ def parse_args() -> Namespace:
     """The command-line arguments."""
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--config",
-        type=Path,
-        default=DEFAULT_CONFIG_DIR / "synthetic.yaml",
-        help="(default: %(default)s)",
+        "config", help="settings file in configs/, without .yaml: synthetic or server"
     )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    with open(args.config) as file:
+    with open(DEFAULT_CONFIG_DIR / f"{args.config}.yaml") as file:
         config = yaml.safe_load(file)
     root = Path(config["root"])
     paths = {name: root / path for name, path in config["paths"].items()}
