@@ -47,18 +47,39 @@ the CPUs.
 The plots also turn the medians into hours, with each model's settings file in
 `configs/models/`:
 
-- A full training run, at worst: `max_steps` training steps on full batches,
-  plus the evaluations (`eval_batches` inference batches of each of the two
-  splits, every `eval_interval` steps). Real batches are shorter, so real steps
-  are faster. Not counted: building the batches (about 1 ms each here),
-  checkpoints, and Lightning's own work (about 4% more on CPU).
+- Training, a pass over a million people, at worst: a million divided by 128
+  steps (7,813) on full batches, plus the evaluations of those steps
+  (`eval_batches` inference batches of each of the two splits, every
+  `eval_interval` steps). Real batches are shorter, so real steps are faster.
+  Not counted: building the batches (about 1 ms each here), checkpoints, and
+  Lightning's own work (about 4% more on CPU).
 - Inference for a million people: a million divided by 128, times the seconds
   per inference batch.
+- For a whole run, multiply by the cohort's size (in millions) and the passes.
+  Delphi's settings, 150,000 steps of 128 people, are about 19 passes over a
+  million people.
 
-Here (Threadripper PRO 5995WX, 2026-10-13), a full run of 150,000 steps would
-take, at worst, 33 to 65 hours on 16 threads depending on the model, and 3 to 4
-hours on the GPU. The server's CPU differs: its own benchmark gives its own
+Here (Threadripper PRO 5995WX, 2026-10-13), a training pass over a million
+people takes, at worst, 1.7 to 3.4 hours on 16 threads depending on the model,
+and 0.14 to 0.19 hours on the GPU; a full run of 150,000 steps, 33 to 65 hours
+on 16 threads. The server's CPU differs: its own benchmark gives its own
 estimates.
+
+### Dataset size
+
+- The training step and inference do not depend on the data: they time a full
+  batch, the worst case for the real data too.
+- A training run is a number of steps, not of passes over the data: each step
+  draws random people, as in Delphi. Its time does not grow with the cohort, but
+  how often each person is seen does: `max_steps` × 128 / training people times
+  on average. The right `max_steps` for the real cohort is best chosen from the
+  validation curves of a first run.
+- Inference grows linearly with the people: multiply the estimate (for a million
+  people) by the cohort's size.
+- Reading the tokens at the start of a run grows with the data (tens of seconds
+  for tens of millions of rows), as does their memory (about 600 MB for 50
+  million). The dry run and overfit timings below come from the small synthetic
+  data, so they leave this out.
 
 ### On 24 threads
 
@@ -67,13 +88,13 @@ take. Estimated from the 16-thread results, between a linear speed-up (the best
 case) and the trend from 4 to 16 threads (4 times the threads made a step 2.2 to
 2.7 times faster, so the gain shrinks with more threads):
 
-| Model                 | Training step, 16 threads | 24 threads, estimated | Training run, 24 threads |
-| --------------------- | ------------------------- | --------------------- | ------------------------ |
-| Delphi                | 0.89 s                    | 0.59–0.71 s           | 26–31 h                  |
-| Delphi v2             | 0.75 s                    | 0.50–0.56 s           | 22–24 h                  |
-| Delphi v2, MOTOR head | 1.51 s                    | 1.00–1.18 s           | 43–51 h                  |
+| Model                 | Training step, 16 threads | 24 threads, estimated | A pass over a million people, 24 threads | 150,000 steps, 24 threads |
+| --------------------- | ------------------------- | --------------------- | ---------------------------------------- | ------------------------- |
+| Delphi                | 0.89 s                    | 0.59–0.71 s           | 1.3–1.6 h                                | 26–31 h                   |
+| Delphi v2             | 0.75 s                    | 0.50–0.56 s           | 1.1–1.3 h                                | 22–24 h                   |
+| Delphi v2, MOTOR head | 1.51 s                    | 1.00–1.18 s           | 2.3–2.7 h                                | 43–51 h                   |
 
-At worst (full batches), here; the training run includes the evaluations.
+At worst (full batches, the slower of the two runs here), with the evaluations.
 
 ## Measured once: the dry run and the overfit task
 

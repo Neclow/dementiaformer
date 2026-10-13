@@ -52,7 +52,7 @@ def read_results(path: Path) -> pl.DataFrame:
 
 
 def estimate_hours(results: pl.DataFrame) -> pl.DataFrame:
-    """Hours of a full training run and of inference for PEOPLE people, per model and device."""
+    """Hours of a training pass over PEOPLE people and of their inference, per model and device."""
     # One row per model: its training settings
     settings = pl.DataFrame(
         [{"model": model, **read_model_settings(model)["training"]} for model in MODELS]
@@ -70,10 +70,12 @@ def estimate_hours(results: pl.DataFrame) -> pl.DataFrame:
         )
         .join(settings, on="model")
     )
-    # Training: every step on a full batch, plus the evaluations (eval_batches
-    # batches of each of the two splits, every eval_interval steps)
-    evaluations = pl.col("max_steps") // pl.col("eval_interval")
-    training = pl.col("max_steps") * pl.col("step") + evaluations * 2 * pl.col(
+    # Training: a pass over PEOPLE people, each step on a full batch, plus the
+    # evaluations of those steps (eval_batches batches of each of the two
+    # splits, every eval_interval steps)
+    steps = PEOPLE / pl.col("batch_size")
+    evaluations = steps / pl.col("eval_interval")
+    training = steps * pl.col("step") + evaluations * 2 * pl.col(
         "eval_batches"
     ) * pl.col("inference")
     inference = PEOPLE / pl.col("batch_size") * pl.col("inference")
@@ -116,7 +118,6 @@ def plot_machine(results: pl.DataFrame, title: str, path: Path) -> None:
     sns.set_theme(style="ticks", context="notebook")
     devices = [device for device in DEVICES if device in results["device"].to_list()]
     hours = estimate_hours(results)
-    max_steps = read_model_settings("delphi")["training"]["max_steps"]
     fig, axes = plt.subplots(2, 2, figsize=(10, 7.5))
     # The two measures share their y axis: both are seconds per batch
     axes[0, 1].sharey(axes[0, 0])
@@ -132,7 +133,7 @@ def plot_machine(results: pl.DataFrame, title: str, path: Path) -> None:
         )
         ax.set_ylabel("Seconds per batch of 128 people")
     for ax, measure, heading in [
-        (axes[1, 0], "training", f"Training run of {max_steps:,} steps, estimated"),
+        (axes[1, 0], "training", f"Training, a pass over {PEOPLE:,} people, estimated"),
         (axes[1, 1], "inference", f"Inference for {PEOPLE:,} people, estimated"),
     ]:
         draw(ax, hours.filter(measure=measure), "hours", devices)
