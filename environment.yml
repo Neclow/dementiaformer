@@ -10,12 +10,17 @@
 # Packages already installed at a matching version are left as they are.
 #
 # Kept in step with pixi.toml: every package added there is either already on
-# the server or listed here. Development tools (pytest, pre-commit, ty) are not
-# listed: the client does not need them.
+# the server or listed here. Development tools (pre-commit, ty) are not listed:
+# the user does not need them. pytest and pytest-benchmark are, for the
+# benchmarks (docs/benchmarks.md).
 dependencies:
   - pip
   - pyyaml>=6.0.3,<7
+  - pytest>=9.1.1,<10
+  - pytest-benchmark>=5.3.0,<6
   - pip:
       - lightning==2.6.6
       - polars>=2.0.0,<3
       - torchinfo>=1.8.0,<2
+      - matplotlib>=3.11.2,<4
+      - seaborn>=0.13.2,<0.14
