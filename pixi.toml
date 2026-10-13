@@ -6,7 +6,6 @@ platforms = ["linux-64", "win-64"]
 version = "0.1.0"
 
 [tasks]
-make_synthetic_data = "python -m pipeline.make_synthetic_data"
 build_tokens = "python -m pipeline.build_tokens --config configs/synthetic.yaml"
 test = "python -m pytest tests"
 
@@ -31,7 +30,6 @@ r-arrow = ">=25.0.0,<26"
 r-tidyverse = ">=2.0.0,<3"
 
 [feature.r.tasks]
-strings = "Rscript pipeline/strings.R configs/synthetic.yaml"
 # Step 5a on the synthetic data (pipeline/split.R)
 split = "Rscript pipeline/split.R configs/synthetic.yaml"
 

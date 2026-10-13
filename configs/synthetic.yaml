@@ -1,34 +1,19 @@
-# Settings of the pipeline on the synthetic data, laid out as on the user's
-# server (scripts/post_install.sh). configs/server.yaml has the same keys.
-# Data/ holds the user's synthetic data as delivered, synthetic/ the files our
-# scripts make from it.
+# Settings of the pipeline on the user's synthetic data. configs/server.yaml has
+# the same settings: only root differs.
 
-# Folder holding rawdata/ and workdata/, with a trailing slash
-root: data/
+# Folder of the files below, with a trailing slash
+root: data/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/
 # Age at which prediction starts (the file names below contain it)
 index_age: 70
 
 # Paths relative to root
 paths:
-  # Made by make_synthetic_data here, by the user's preprocessing (script 2) on the server
-  contacts: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/age70_df_born1923_1943.parquet
-  persons: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/age70_df_born1923_1943_short.parquet
-  migration: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/age70_df_born1923_1943_migration.parquet
-  icd10_descriptions: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/icd10_english_descriptions.csv
-  # In the user's synthetic data
-  income: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/SEP/income.parquet
-  # Made by strings.R
-  strings: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/age70_df_born1923_1943_strings.parquet
-  tabular: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/age70_df_born1923_1943_tabular.parquet
+  # Made by the user's scripts 2 and 3
+  contacts: age70_df_born1913_1947.parquet
+  persons: age70_df_born1913_1947_short.parquet
+  migration: age70_df_born1913_1947_migration.parquet
+  tabular: age70_df_born1913_1947_tabular.parquet
   # Made by split.R
-  split: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/age70_split_and_folds.parquet
+  split: age70_split_and_folds.parquet
   # Made by build_tokens.py: a folder
-  tokens: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/tokens
-
-# Inputs of make_synthetic_data: the user's synthetic data at age 65, and the
-# ICD-10 coding of scripts/post_install.sh. Paths relative to root
-synthetic:
-  contacts: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/df_born1923_1943.parquet
-  persons: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/df_born1923_1943_short.parquet
-  migration: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/df_born1923_1943_migration.parquet
-  icd10_coding: raw/icd10_coding19.tsv
+  tokens: tokens

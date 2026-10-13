@@ -1,23 +1,19 @@
-# Settings of the pipeline on the user's server. configs/synthetic.yaml has the
-# same keys for the synthetic data.
+# Settings of the pipeline on the user's server. configs/synthetic.yaml has
+# the same settings: only root differs.
 
-# Folder holding rawdata/ and workdata/, with a trailing slash
-root: E:/
+# Folder of the files below, with a trailing slash
+root: E:/workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/
 # Age at which prediction starts (the file names below contain it)
 index_age: 70
 
 # Paths relative to root
 paths:
-  # Made by the user's preprocessing (script 2)
-  contacts: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947.parquet
-  persons: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947_short.parquet
-  migration: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947_migration.parquet
-  icd10_descriptions: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data processing and analysis/Analysis - predicting from age 70/icd10_english_descriptions.csv
-  income: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/SEP/income.parquet
-  # Made by strings.R
-  strings: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947_strings.parquet
-  tabular: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947_tabular.parquet
+  # Made by the user's scripts 2 and 3
+  contacts: age70_df_born1913_1947.parquet
+  persons: age70_df_born1913_1947_short.parquet
+  migration: age70_df_born1913_1947_migration.parquet
+  tabular: age70_df_born1913_1947_tabular.parquet
   # Made by split.R
-  split: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_split_and_folds.parquet
+  split: age70_split_and_folds.parquet
   # Made by build_tokens.py: a folder
-  tokens: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/tokens
+  tokens: tokens

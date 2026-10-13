@@ -230,5 +230,3 @@ notes/
 # Data
 data/**
 !data/README.md
-!data/raw/
-!data/raw/README.md

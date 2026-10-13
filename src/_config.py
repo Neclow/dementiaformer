@@ -9,23 +9,6 @@ from typing import Final
 DEFAULT_CONFIG_DIR: Final = Path("configs")
 # Last register date, as in 5 predictions.R
 REGISTER_END: Final = dt.date(2022, 12, 31)
-# Dementia codes
-DEMENTIA_CODES: Final = [
-    "F000",
-    "F001",
-    "F009",
-    "F010",
-    "F019",
-    "F020",
-    "F039",
-    "G30",
-    "G301",
-    "G309",
-    "G318B",
-    "G318E",
-    "G319",
-    "G310B",
-]
 # The 22 ICD-10 chapters, as in 3 strings.R: (first code, last code, name). A
 # three-character code belongs to the chapter whose range holds it
 ICD10_CHAPTERS: Final = [
@@ -52,10 +35,6 @@ ICD10_CHAPTERS: Final = [
     ("Z00", "Z99", "HEALTH_SERVICES"),
     ("U00", "U99", "SPECIAL_PURPOSES"),
 ]
-# Random emigrants share in make_synthetic_data.R
-EMIGRATION_SHARE: Final = 0.03
-# Random seed
-SEED: Final = 709816
 # No event before this date, as in 3 strings.R (start of the Psychiatric
 # Central Research Register)
 EARLIEST_REGISTER_DATE: Final = dt.date(1969, 1, 1)
