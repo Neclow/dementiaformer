@@ -16,8 +16,7 @@ tasks, use judgment.
 - docs: documentation for the client
 - Use pixi for python, never native python
 - Never put Claude as co-author
-- For commits, ask whether to commit directly on main or in a new branch
-- For commits, always make commits with separated concerns
+- Only the user commits
 
 ## 1. Think Before Coding
 

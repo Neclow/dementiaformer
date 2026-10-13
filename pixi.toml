@@ -22,3 +22,15 @@ torch = "==2.13"
 numpy = "==2.5"
 lightning = "==2.6.6"
 polars = ">=2.0.0, <3"
+
+[feature.r.dependencies]
+r-base = ">=4.5.3,<4.6"
+r-dplyr = ">=1.2.1,<2"
+r-arrow = ">=25.0.0,<26"
+
+[feature.r.tasks]
+# Step 5a on the synthetic data (pipeline/split.R)
+split = "Rscript pipeline/split.R data/synthetic_age70/age70_df_born1923_1943_short.parquet data/synthetic_age70/age70_split_and_folds.parquet"
+
+[environments]
+r = { features = ["r"], no-default-feature = true }

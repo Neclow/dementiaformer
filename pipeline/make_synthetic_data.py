@@ -1,11 +1,5 @@
 """Make the synthetic data in the layout the pipeline reads, at a given index age."""
 
-# Writes data/synthetic_age<age>/. Decisions: docs/pipeline.md. Run from the
-# repository root:
-#   pixi run make_synthetic_data
-#   python -m pipeline.make_synthetic_data --index-age 65
-
-import datetime as dt
 import io
 import zipfile
 
@@ -15,97 +9,71 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
-from src._config import DEFAULT_RAW_DIR
+from src._config import (
+    DEFAULT_RAW_DIR,
+    DEMENTIA_CODES,
+    EMIGRATION_SHARE,
+    REGISTER_END,
+    SEED,
+)
 
 # Folder inside synthetic.zip that holds the person and migration files
 ZIP_FOLDER = (
     "synthetic/data/workdata/709816/Personal folders/Mathilde/Projects/"
     "p1_transformers/Data/"
 )
-# Last register date, as in 5 predictions.R
-REGISTER_END = dt.date(2022, 12, 31)
-# The dementia codes of make_synthetic_data.R
-DEMENTIA_CODES = [
-    "F000",
-    "F001",
-    "F009",
-    "F010",
-    "F019",
-    "F020",
-    "F039",
-    "G30",
-    "G301",
-    "G309",
-    "G318B",
-    "G318E",
-    "G319",
-    "G310B",
-]
-# Share of "out_after_65" movers in make_synthetic_data.R
-EMIGRATION_SHARE = 0.03
-SEED = 709816
 
 
-def read_from_zip(name: str) -> pl.DataFrame:
+def read_from_synthetic_zip(name: str) -> pl.DataFrame:
     """Read one parquet file of synthetic.zip."""
     with zipfile.ZipFile(DEFAULT_RAW_DIR / "synthetic.zip") as archive:
         return pl.read_parquet(io.BytesIO(archive.read(ZIP_FOLDER + name)))
 
 
-def keep_until(
-    contacts: pl.DataFrame, persons: pl.DataFrame, end_column: str
+def first_dementia_code(
+    per_diagnosis_raw: pl.DataFrame, until: pl.DataFrame
 ) -> pl.DataFrame:
-    """The contacts on or before each person's date in end_column (all when null)."""
+    """Each person's first dementia code on or before their date in until (PNR, END)."""
     return (
-        contacts.join(persons.select("PNR", end_column), on="PNR")
-        .filter(pl.col(end_column).is_null() | (pl.col("INDATE") <= pl.col(end_column)))
-        .drop(end_column)
-    )
-
-
-def first_dementia_code(contacts: pl.DataFrame) -> pl.DataFrame:
-    """DEMENTIA_INCIDENT_DATE: each person's first contact with a dementia code."""
-    return (
-        contacts.filter(pl.col("DIAG").is_in(DEMENTIA_CODES))
+        per_diagnosis_raw.filter(pl.col("DIAG").is_in(DEMENTIA_CODES))
+        .join(until, on="PNR")
+        .filter(pl.col("END").is_null() | (pl.col("INDATE") <= pl.col("END")))
         .group_by("PNR")
         .agg(DEMENTIA_INCIDENT_DATE=pl.col("INDATE").min())
     )
 
 
-def main() -> None:
-    parser = ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--index-age", type=int, default=70, help="(default: %(default)s)"
-    )
-    index_age = parser.parse_args().index_age
+def make_persons(
+    per_person_raw: pl.DataFrame,
+    per_diagnosis_raw: pl.DataFrame,
+    index_age: int,
+    rng: np.random.Generator,
+) -> pl.DataFrame:
+    """One row per person alive and without dementia at the index age."""
     birthday = f"BDAY{index_age}"
-    output = Path(f"data/synthetic_age{index_age}")
-    rng = np.random.default_rng(SEED)
 
     # Person columns only, with BDAY<age>, and no death after the registers end
-    persons = (
-        read_from_zip("df_born1923_1943_short.parquet")
-        .select("PNR", "SEX", "BIRTH_DATE", "BIRTH_COHORT", "EDU_CAT3", "DEATH_DATE")
-        .with_columns(
-            pl.col("BIRTH_DATE").dt.offset_by(f"{index_age}y").alias(birthday),
-            DEATH_DATE=pl.when(pl.col("DEATH_DATE") <= REGISTER_END).then(
-                pl.col("DEATH_DATE")
-            ),
-        )
+    # Columns selected: PNR, sex, birth date, birth cohort, education, death date
+    # Create columns:
+    #   - BDAY<age>: birth date + index_age years
+    #   - DEATH_DATE: null if death after the registers end
+    persons = per_person_raw.select(
+        "PNR", "SEX", "BIRTH_DATE", "BIRTH_COHORT", "EDU_CAT3", "DEATH_DATE"
+    ).with_columns(
+        pl.col("BIRTH_DATE").dt.offset_by(f"{index_age}y").alias(birthday),
+        DEATH_DATE=pl.when(pl.col("DEATH_DATE") <= REGISTER_END).then(
+            pl.col("DEATH_DATE")
+        ),
     )
-    # Contact columns only
-    contacts = (
-        pl.read_parquet(DEFAULT_RAW_DIR / "df_born1923_1943.parquet")
-        .select("PNR", "INDATE", "OUTDATE", "DIAG", "DIAG_TYPE", "PATIENT_TYPE")
-        .filter(pl.col("INDATE").is_not_null(), pl.col("DIAG").is_not_null())
-    )
-    migration = read_from_zip("df_born1923_1943_migration.parquet")
 
-    # No contact after death, then keep people alive and without dementia at
-    # the index age
-    contacts = keep_until(contacts, persons, "DEATH_DATE")
+    # The cohort
+    # Filter 1: alive at the index age
+    # Filter 2: no dementia code before the index age (codes after death ignored)
+    until_death = persons.select("PNR", END="DEATH_DATE")
     persons = (
-        persons.join(first_dementia_code(contacts), on="PNR", how="left")
+        persons.join(
+            first_dementia_code(per_diagnosis_raw, until_death), on="PNR", how="left"
+        )
         .filter(
             pl.col("DEATH_DATE").is_null() | (pl.col("DEATH_DATE") >= pl.col(birthday)),
             pl.col("DEMENTIA_INCIDENT_DATE").is_null()
@@ -114,36 +82,40 @@ def main() -> None:
         .drop("DEMENTIA_INCIDENT_DATE")
     )
 
-    # Departures on a random day between the index age and death or the end of
-    # the registers
+    # Emigration
+    # Create columns:
+    #   - EMIGRATION_DATE: for EMIGRATION_SHARE of the people, a random day
+    #     between the index age and death or the registers end; null otherwise
     emigrants = persons.sample(fraction=EMIGRATION_SHARE, seed=SEED)
     days_left = pl.min_horizontal("DEATH_DATE", pl.lit(REGISTER_END)) - pl.col(birthday)
-    departures = emigrants.with_columns(
+    emigration = emigrants.with_columns(
         DAYS=days_left.dt.total_days(),
         RANDOM=pl.Series(rng.random(emigrants.height)),
     ).select(
         "PNR",
-        HAEND_DATO=pl.col(birthday)
+        EMIGRATION_DATE=pl.col(birthday)
         + pl.duration(days=(pl.col("RANDOM") * pl.col("DAYS")).floor().cast(pl.Int64)),
-        INDUD_KODE=pl.lit("U"),
     )
-    migration = pl.concat(
-        [migration.join(persons.select("PNR"), on="PNR"), departures]
-    ).sort("PNR", "HAEND_DATO")
+    persons = persons.join(emigration, on="PNR", how="left")
 
-    # No contact after emigration, then dementia, follow-up end and event type
-    # from what is left
-    persons = persons.join(
-        departures.select("PNR", EMIGRATION_DATE="HAEND_DATO"), on="PNR", how="left"
-    )
-    contacts = keep_until(
-        contacts.join(persons.select("PNR"), on="PNR"), persons, "EMIGRATION_DATE"
+    # Outcome
+    # Create columns:
+    #   - DEMENTIA_INCIDENT_DATE: first dementia code before death and emigration
+    #   - DEMENTIA: 1 if there is a DEMENTIA_INCIDENT_DATE, 0 otherwise
+    #   - FOLLOW_UP_END_DATE: earliest of dementia, death, emigration, registers end
+    #   - EVENT_TYPE: dementia, death or censored, whichever ends the follow-up
+    until_death_or_emigration = persons.select(
+        "PNR", END=pl.min_horizontal("DEATH_DATE", "EMIGRATION_DATE")
     )
     follow_up_end = pl.min_horizontal(
         "DEMENTIA_INCIDENT_DATE", "DEATH_DATE", "EMIGRATION_DATE", pl.lit(REGISTER_END)
     )
-    persons = (
-        persons.join(first_dementia_code(contacts), on="PNR", how="left")
+    return (
+        persons.join(
+            first_dementia_code(per_diagnosis_raw, until_death_or_emigration),
+            on="PNR",
+            how="left",
+        )
         .with_columns(
             DEMENTIA=pl.col("DEMENTIA_INCIDENT_DATE").is_not_null().cast(pl.Int32),
             FOLLOW_UP_END_DATE=follow_up_end,
@@ -160,13 +132,74 @@ def main() -> None:
         .sort("PNR")
     )
 
+
+def make_contacts(
+    per_diagnosis_raw: pl.DataFrame, persons: pl.DataFrame
+) -> pl.DataFrame:
+    """One row per diagnosis at a hospital contact of the cohort."""
+    # Columns selected: PNR, hospital admission and discharge dates, diagnosis, diagnosis type, patient type
+    # Filter 1: no null admission date or diagnosis
+    # Filter 2: people of the cohort only
+    # Filter 3: no contact after death or emigration
+    until_death_or_emigration = persons.select(
+        "PNR", END=pl.min_horizontal("DEATH_DATE", "EMIGRATION_DATE")
+    )
+    return (
+        per_diagnosis_raw.select(
+            "PNR", "INDATE", "OUTDATE", "DIAG", "DIAG_TYPE", "PATIENT_TYPE"
+        )
+        .filter(pl.col("INDATE").is_not_null(), pl.col("DIAG").is_not_null())
+        .join(until_death_or_emigration, on="PNR")
+        .filter(pl.col("END").is_null() | (pl.col("INDATE") <= pl.col("END")))
+        .drop("END")
+    )
+
+
+def make_migration(
+    per_crossing_raw: pl.DataFrame, persons: pl.DataFrame
+) -> pl.DataFrame:
+    """One row per border crossing of the cohort."""
+    # Filter 1: people of the cohort only
+    # Add rows: a departure (INDUD_KODE U) on each EMIGRATION_DATE
+    departures = persons.filter(pl.col("EMIGRATION_DATE").is_not_null()).select(
+        "PNR", HAEND_DATO="EMIGRATION_DATE", INDUD_KODE=pl.lit("U")
+    )
+    return pl.concat(
+        [per_crossing_raw.join(persons.select("PNR"), on="PNR"), departures]
+    ).sort("PNR", "HAEND_DATO")
+
+
+def main() -> None:
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--index-age", type=int, default=70, help="(default: %(default)s)"
+    )
+    index_age = parser.parse_args().index_age
+    output = Path(f"data/synthetic_age{index_age}")
+    rng = np.random.default_rng(SEED)
+
+    print("Reading the raw data...", end=" ")
+    per_person_raw = read_from_synthetic_zip("df_born1923_1943_short.parquet")
+    per_diagnosis_raw = pl.read_parquet(DEFAULT_RAW_DIR / "df_born1923_1943.parquet")
+    per_crossing_raw = read_from_synthetic_zip("df_born1923_1943_migration.parquet")
+    print("Done")
+
+    print(f"Making the synthetic data for index age {index_age}...", end=" ")
+    persons = make_persons(per_person_raw, per_diagnosis_raw, index_age, rng)
+    contacts = make_contacts(per_diagnosis_raw, persons)
+    migration = make_migration(per_crossing_raw, persons)
+    print("Done")
+
     # None of the impossible dates may remain
+    print("Checking the cohort and contacts for impossible dates...", end=" ")
     assert persons["PNR"].is_unique().all()
     assert persons.filter(pl.col("DEATH_DATE") > REGISTER_END).is_empty()
     assert persons.filter(
         pl.col("DEMENTIA_INCIDENT_DATE") > pl.col("DEATH_DATE")
     ).is_empty()
-    assert persons.filter(pl.col("FOLLOW_UP_END_DATE") < pl.col(birthday)).is_empty()
+    assert persons.filter(
+        pl.col("FOLLOW_UP_END_DATE") < pl.col(f"BDAY{index_age}")
+    ).is_empty()
     assert (
         contacts.join(persons, on="PNR")
         .filter(
@@ -175,6 +208,7 @@ def main() -> None:
         )
         .is_empty()
     )
+    print("Done")
 
     output.mkdir(parents=True, exist_ok=True)
     prefix = f"age{index_age}_df_born1923_1943"
@@ -184,6 +218,7 @@ def main() -> None:
 
     print(f"{persons.height} people, {contacts.height} contacts -> {output}")
     print(persons["EVENT_TYPE"].value_counts().sort("EVENT_TYPE"))
+    print("Done")
 
 
 if __name__ == "__main__":

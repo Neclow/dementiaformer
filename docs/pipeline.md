@@ -4,6 +4,12 @@ One section per script in `pipeline/`, in the order they run.
 
 ## `make_synthetic_data.py`
 
+Example run:
+
+```bash
+python -m pipeline.make_synthetic_data --index-age 70
+```
+
 Turns the user's synthetic data (`data/raw/`, made to predict from age 65) into
 the layout the pipeline reads, at any index age (`--index-age`, default 70). The
 data only serves to check that the code runs: its diagnoses and outcomes are
@@ -24,3 +30,7 @@ random.
   and `EVENT_TYPE` says which came first.
 - Person columns are kept in the person file only. The letter flags (`A_DIAG` …
   `U_DIAG`) are dropped.
+
+Writes:
+
+- `data/synthetic_age<age>/`
