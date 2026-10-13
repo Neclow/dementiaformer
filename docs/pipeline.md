@@ -2,7 +2,7 @@
 
 One section per script in `pipeline/`, in the order they run. They start from
 the outputs of the user's scripts 2 and 3. Each takes the name of a settings
-file in `configs/`, always given: `synthetic` or `server` (e.g.
+file in `configs/data/`, always given: `synthetic` or `server` (e.g.
 `pixi run split synthetic`).
 
 ## `split.R`
@@ -82,9 +82,11 @@ thing changes:
   fb72166 (`data/ukb_real_data/labels.csv`), in `p1_transformers/Delphi/`
   (`delphi_labels` in the config). On the server, copy it there. Its 1,255 codes
   are all in ICD-10 chapters A to Q, so codes of chapters R to Z are dropped.
-- `delphi` writes Delphi's own files: a token's number is its line in
-  `labels.csv` minus 2 (Female 1, Death 1268), as in Delphi's data. The other
-  variants write ours.
+- Every variant writes ours: `events.parquet` and `vocab.csv`, where 0 is
+  padding and 1 no event. With Delphi's vocabulary, a token's number is its line
+  in `labels.csv` minus 1 (Female 2, Death 1269), as in Delphi's batches.
+- `delphi` also writes Delphi's own files, for Delphi's code: there, tokens are
+  one less (Female 1, Death 1268), as in Delphi's data.
 
 Example: one training person, born on 1 June 1930 (index date 1 June 2000, at
 70), and what each variant keeps of their timeline. D59 is in fewer than 5
@@ -114,7 +116,96 @@ tokens/
   delphi_all_codes/    events.parquet, vocab.csv
   whole_lives/         events.parquet, vocab.csv
   cut_at_index/        events.parquet, vocab.csv
-  delphi/              train.bin, val.bin, test.bin (Delphi's format: uint32
-                       rows of patient id, age in days, token), patients.parquet
-                       (PATIENT_ID, PNR)
+  delphi/              events.parquet, vocab.csv, and Delphi's format:
+                       train.bin, val.bin, test.bin (uint32 rows of patient id,
+                       age in days, token), patients.parquet (PATIENT_ID, PNR)
 ```
+
+## `train_torch.py`
+
+Example runs:
+
+```bash
+# Check that everything runs: one training batch and one evaluation batch per
+# split, nothing written (as Lightning's fast_dev_run)
+python -m pipeline.train_torch synthetic delphi whole_lives --dry-run
+# Train, on 16 CPU threads (DEFAULT_N_THREADS in src/_config.py)
+python -m pipeline.train_torch server delphi whole_lives
+# Continue a run stopped early, from its last checkpoint, on 8 threads
+python -m pipeline.train_torch server delphi whole_lives --resume --threads 8
+```
+
+Trains a model (`delphi`, `delphi_v2` or `delphi_v2_motorhead`) on a variant's
+tokens with plain PyTorch, as Delphi's `train.py` trains Delphi. The model's
+settings file in `configs/models/` (`delphi.yaml` and so on) holds its size and
+its training settings.
+
+- Training settings: Delphi's, for Delphi-2M (`config/train_delphi.py`): batches
+  of 128 people with up to 96 tokens each; AdamW with a learning rate warmed up
+  over 1,000 steps, then lowered along a cosine to a tenth at step 150,000;
+  weight decay 0.2 on the weights of linear layers only; gradients clipped at 1.
+- Each step draws random training people, with replacement, as Delphi does:
+  there are no epochs.
+- Every 250 steps and at the last step, the loss on 25 batches of training
+  people and of validation people. Evaluation batches get "no event" every 5
+  years, and Delphi's loss leaves out "no event" there: the evaluation losses
+  are not comparable with the batch losses, only with each other.
+- Unlike Delphi, each evaluation uses the same people (random, drawn once), so
+  that the curves are less noisy.
+- In `metrics.csv` and `train.log`, an evaluation is labelled with the last
+  training step before it (step 249 for the evaluation after 250 steps), as
+  Lightning labels it.
+- `best.pt` is the model with the lowest validation loss so far. `last.pt` is
+  rewritten at each evaluation, to continue with `--resume`.
+- `--overfit-batches N` trains on the same N batches at every step: the loss
+  should drop sharply, which shows that the model can learn.
+- `--device cuda` trains on a GPU, if there is one. `--threads N` sets the
+  number of CPU threads (default 16, `DEFAULT_N_THREADS` in `src/_config.py`).
+- A new run never overwrites an earlier one: delete its folder first, or add
+  `--resume`.
+
+Writes, into the `runs` folder of the config, a folder per model and variant
+(`runs/delphi_whole_lives/`):
+
+```
+settings.yaml   the settings file and the command line of the run
+train.log       what the run printed, with times
+metrics.csv     a row per log (every 25 steps) and per evaluation: step,
+                learning_rate, seconds_per_step, batch/loss, train/loss,
+                validation/loss, and each loss term (as Lightning's CSVLogger)
+curves.png      the losses against the step, redrawn at each evaluation
+best.pt         the model with the lowest validation loss, its optimiser, step
+                and settings
+last.pt         the same at the last evaluation
+```
+
+## `train_lightning.py`
+
+Example runs:
+
+```bash
+python -m pipeline.train_lightning synthetic delphi whole_lives --dry-run
+python -m pipeline.train_lightning server delphi whole_lives
+python -m pipeline.train_lightning server delphi whole_lives --resume
+```
+
+The same training as `train_torch.py`, with Lightning: the same settings, model,
+loss, optimiser, learning rate and batches, and the same options. Lightning may
+make it easier to change the training (more devices, mixed precision,
+callbacks).
+
+- The options are Lightning's: `--dry-run` is `fast_dev_run`,
+  `--overfit-batches` is `overfit_batches`, and `--resume` continues from
+  `last.ckpt`.
+- Checked: for the same settings, both trainers give the same batch losses, and
+  the same evaluation losses to within float rounding.
+- The evaluation runs every 250 steps only (not at a last step that is not a
+  multiple of 250).
+- `metrics.csv` is Lightning's `CSVLogger`'s, with an `epoch` column more
+  (always 0: there are no epochs). Unlike Lightning's, `--resume` appends to it
+  instead of deleting it.
+
+Writes, into the `runs` folder of the config, a folder per model and variant
+(`runs/delphi_whole_lives_lightning/`): `settings.yaml`, `train.log`,
+`metrics.csv` and `curves.png` as `train_torch.py`, and Lightning's checkpoints
+`best.ckpt` and `last.ckpt`.
