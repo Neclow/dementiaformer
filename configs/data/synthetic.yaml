@@ -20,6 +20,9 @@ paths:
   tokens: tokens
   # Made by train_torch.py: a folder per model and variant
   runs: runs
+  # Made by predict.R: a folder of arm results, and a folder of tables
+  arm_results: transformer_arm_results
+  results: ../Results
   # Delphi's vocabulary, labels.csv of github.com/gerstung-lab/Delphi at
   # commit fb72166 (data/ukb_real_data/labels.csv)
   delphi_labels: ../Delphi/labels.csv
