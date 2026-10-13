@@ -1,14 +1,9 @@
 # Raw data
 
-Not in git. Put the user's synthetic data here (`DEFAULT_RAW_DIR` in
-`src/_config.py`):
+Not in git. Holds:
 
-- `df_born1923_1943.parquet`: one row per hospital diagnosis, with the person's
-  columns repeated on each row (layout that predicts from age 65).
-- `df_born1923_1943_string_diag.parquet`: one row per person, with their
-  diagnoses written as sentences.
-- `synthetic.zip`: the user's synthetic data folder: the R script that made it
-  (`make_synthetic_data.R`), the person file (`df_born1923_1943_short.parquet`),
-  the migration file (`df_born1923_1943_migration.parquet`), and files the
-  pipeline does not use (raw registers, income, education, dementia
-  prescriptions).
+- `synthetic.zip`: the user's synthetic data, put here by hand.
+  `scripts/post_install.sh` unpacks it into `data/rawdata/` and
+  `data/workdata/`, as on the user's server.
+- `icd10_coding19.tsv`: WHO ICD-10 codes and titles (UK Biobank data-coding 19),
+  downloaded by `scripts/post_install.sh`.

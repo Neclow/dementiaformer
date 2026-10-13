@@ -22,10 +22,10 @@ Run from the repository root:
 The decisions behind the tokens are in docs/tokens.md.
 """
 
-import argparse
 import json
 import tomllib
 
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from dataclasses import asdict
 from pathlib import Path
 
@@ -36,8 +36,8 @@ from src._config import DEFAULT_CONFIG_DIR
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    parser = ArgumentParser(
+        description=__doc__, formatter_class=RawDescriptionHelpFormatter
     )
     parser.add_argument(
         "--config",

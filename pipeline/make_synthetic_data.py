@@ -1,33 +1,28 @@
 """Make the synthetic data in the layout the pipeline reads, at a given index age."""
 
-import io
-import zipfile
-
 from argparse import ArgumentParser
 from pathlib import Path
 
 import numpy as np
 import polars as pl
+import yaml
 
 from src._config import (
-    DEFAULT_RAW_DIR,
+    DEFAULT_CONFIG_DIR,
     DEMENTIA_CODES,
     EMIGRATION_SHARE,
+    ICD10_CHAPTERS,
     REGISTER_END,
     SEED,
 )
 
-# Folder inside synthetic.zip that holds the person and migration files
-ZIP_FOLDER = (
-    "synthetic/data/workdata/709816/Personal folders/Mathilde/Projects/"
-    "p1_transformers/Data/"
-)
 
-
-def read_from_synthetic_zip(name: str) -> pl.DataFrame:
-    """Read one parquet file of synthetic.zip."""
-    with zipfile.ZipFile(DEFAULT_RAW_DIR / "synthetic.zip") as archive:
-        return pl.read_parquet(io.BytesIO(archive.read(ZIP_FOLDER + name)))
+def icd10_chapter(code: pl.Expr) -> pl.Expr:
+    """The ICD10_CHAPTERS name of a three-character code, null outside every chapter."""
+    return pl.coalesce(
+        pl.when(code.is_between(pl.lit(first), pl.lit(last))).then(pl.lit(name))
+        for first, last, name in ICD10_CHAPTERS
+    )
 
 
 def first_dementia_code(
@@ -110,7 +105,7 @@ def make_persons(
     follow_up_end = pl.min_horizontal(
         "DEMENTIA_INCIDENT_DATE", "DEATH_DATE", "EMIGRATION_DATE", pl.lit(REGISTER_END)
     )
-    return (
+    persons = (
         persons.join(
             first_dementia_code(per_diagnosis_raw, until_death_or_emigration),
             on="PNR",
@@ -129,7 +124,38 @@ def make_persons(
             .then(pl.lit("death"))
             .otherwise(pl.lit("censored"))
         )
-        .sort("PNR")
+    )
+
+    # Chapter flags, as script 2 writes them: 3 strings.R compares them with its
+    # own in check 11f
+    # Create columns:
+    #   - CHAPTER_<name>: 1 if a contact before the index age has a code of that
+    #     chapter, 0 otherwise
+    chapters_before_index = (
+        per_diagnosis_raw.join(persons.select("PNR", birthday), on="PNR")
+        .filter(pl.col("INDATE") < pl.col(birthday))
+        .select("PNR", CHAPTER=icd10_chapter(pl.col("DIAG").str.slice(0, 3)))
+        .drop_nulls()
+        .unique()
+    )
+    persons = persons.with_columns(
+        pl.col("PNR")
+        .is_in(chapters_before_index.filter(pl.col("CHAPTER") == name)["PNR"].to_list())
+        .cast(pl.Int32)
+        .alias(f"CHAPTER_{name}")
+        for _, _, name in ICD10_CHAPTERS
+    )
+    return persons.sort("PNR")
+
+
+def make_icd10_descriptions(icd10_coding: pl.DataFrame) -> pl.DataFrame:
+    """One row per ICD-10 code with its English title, as 3 strings.R reads them."""
+    # Filter: codes only, not the chapter and block rows
+    # Create columns:
+    #   - code: the code without a dot, as the registers write it
+    #   - description: the title, without the code in front of it
+    return icd10_coding.filter(pl.col("coding").str.contains(r"^[A-Z][0-9]")).select(
+        code="coding", description=pl.col("meaning").str.replace(r"^\S+ ", "")
     )
 
 
@@ -172,22 +198,33 @@ def make_migration(
 def main() -> None:
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--index-age", type=int, default=70, help="(default: %(default)s)"
+        "--config",
+        type=Path,
+        default=DEFAULT_CONFIG_DIR / "synthetic.yaml",
+        help="(default: %(default)s)",
     )
-    index_age = parser.parse_args().index_age
-    output = Path(f"data/synthetic_age{index_age}")
+    with open(parser.parse_args().config) as file:
+        config = yaml.safe_load(file)
+    root = Path(config["root"])
+    index_age = config["index_age"]
+    inputs = {name: root / path for name, path in config["synthetic"].items()}
+    outputs = {name: root / path for name, path in config["paths"].items()}
     rng = np.random.default_rng(SEED)
 
     print("Reading the raw data...", end=" ")
-    per_person_raw = read_from_synthetic_zip("df_born1923_1943_short.parquet")
-    per_diagnosis_raw = pl.read_parquet(DEFAULT_RAW_DIR / "df_born1923_1943.parquet")
-    per_crossing_raw = read_from_synthetic_zip("df_born1923_1943_migration.parquet")
+    per_person_raw = pl.read_parquet(inputs["persons"])
+    per_diagnosis_raw = pl.read_parquet(inputs["contacts"])
+    per_crossing_raw = pl.read_parquet(inputs["migration"])
+    icd10_coding = pl.read_csv(
+        inputs["icd10_coding"], separator="\t", infer_schema=False
+    )
     print("Done")
 
     print(f"Making the synthetic data for index age {index_age}...", end=" ")
     persons = make_persons(per_person_raw, per_diagnosis_raw, index_age, rng)
     contacts = make_contacts(per_diagnosis_raw, persons)
     migration = make_migration(per_crossing_raw, persons)
+    icd10_descriptions = make_icd10_descriptions(icd10_coding)
     print("Done")
 
     # None of the impossible dates may remain
@@ -210,13 +247,16 @@ def main() -> None:
     )
     print("Done")
 
-    output.mkdir(parents=True, exist_ok=True)
-    prefix = f"age{index_age}_df_born1923_1943"
-    contacts.write_parquet(output / f"{prefix}.parquet")
-    persons.write_parquet(output / f"{prefix}_short.parquet")
-    migration.write_parquet(output / f"{prefix}_migration.parquet")
+    for name in ["contacts", "persons", "migration", "icd10_descriptions"]:
+        outputs[name].parent.mkdir(parents=True, exist_ok=True)
+    contacts.write_parquet(outputs["contacts"])
+    persons.write_parquet(outputs["persons"])
+    migration.write_parquet(outputs["migration"])
+    icd10_descriptions.write_csv(outputs["icd10_descriptions"])
 
-    print(f"{persons.height} people, {contacts.height} contacts -> {output}")
+    print(
+        f"{persons.height} people, {contacts.height} contacts -> {outputs['persons'].parent}"
+    )
     print(persons["EVENT_TYPE"].value_counts().sort("EVENT_TYPE"))
     print("Done")
 

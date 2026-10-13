@@ -14,6 +14,7 @@
 # listed: the client does not need them.
 dependencies:
   - pip
+  - pyyaml>=6.0.3,<7
   - pip:
       - lightning==2.6.6
       - polars>=2.0.0,<3
