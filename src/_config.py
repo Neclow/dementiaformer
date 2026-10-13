@@ -10,6 +10,8 @@ from typing import Any, Final
 DEFAULT_CONFIG_DIR: Final = Path("configs")
 DATA_CONFIG_DIR: Final = DEFAULT_CONFIG_DIR / "data"
 MODEL_CONFIG_DIR: Final = DEFAULT_CONFIG_DIR / "models"
+# Folder of the plots, relative to the repository root
+DEFAULT_IMG_DIR: Final = Path("img")
 # CPU threads for PyTorch, unless --threads says otherwise: the server is shared
 DEFAULT_N_THREADS: Final = 16
 # Last register date, as in 5 predictions.R

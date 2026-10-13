@@ -10,6 +10,9 @@ build_tokens = "python -m pipeline.build_tokens"
 train_torch = "python -m pipeline.train_torch"
 train_lightning = "python -m pipeline.train_lightning"
 test = "python -m pytest tests"
+# Benchmarks of speed: results saved in benchmarks/results/<machine>/
+benchmark = "python -m pytest benchmarks --benchmark-storage=benchmarks/results --benchmark-autosave"
+plot_benchmarks = "python -m plots.plot_benchmarks"
 
 [dependencies]
 python = "==3.14.7"

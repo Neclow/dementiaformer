@@ -1,0 +1,1224 @@
+{
+    "machine_info": {
+        "node": "didelx02",
+        "processor": "x86_64",
+        "machine": "x86_64",
+        "python_compiler": "GCC 15.3.0",
+        "python_implementation": "CPython",
+        "python_implementation_version": "3.14.7",
+        "python_version": "3.14.7",
+        "python_build": [
+            "main",
+            "Sep  2 2026 21:08:32"
+        ],
+        "release": "6.8.0-136-generic",
+        "system": "Linux",
+        "cpu": {
+            "python_version": "3.14.7.final.0 (64 bit)",
+            "cpuinfo_version": [
+                9,
+                0,
+                0
+            ],
+            "cpuinfo_version_string": "9.0.0",
+            "arch": "X86_64",
+            "bits": 64,
+            "count": 128,
+            "arch_string_raw": "x86_64",
+            "vendor_id_raw": "AuthenticAMD",
+            "brand_raw": "AMD Ryzen Threadripper PRO 5995WX 64-Cores",
+            "hz_advertised_friendly": "1.7964 GHz",
+            "hz_actual_friendly": "1.7964 GHz",
+            "hz_advertised": [
+                1796363000,
+                0
+            ],
+            "hz_actual": [
+                1796363000,
+                0
+            ],
+            "stepping": 2,
+            "model": 8,
+            "family": 25,
+            "flags": [
+                "3dnowext",
+                "3dnowprefetch",
+                "abm",
+                "adx",
+                "aes",
+                "amd_ppin",
+                "aperfmperf",
+                "apic",
+                "arat",
+                "avic",
+                "avx",
+                "avx2",
+                "bmi1",
+                "bmi2",
+                "bpext",
+                "brs",
+                "cat_l3",
+                "cdp_l3",
+                "clflush",
+                "clflushopt",
+                "clwb",
+                "clzero",
+                "cmov",
+                "cmp_legacy",
+                "constant_tsc",
+                "cpb",
+                "cpuid",
+                "cqm",
+                "cqm_llc",
+                "cqm_mbm_local",
+                "cqm_mbm_total",
+                "cqm_occup_llc",
+                "cr8_legacy",
+                "cx16",
+                "cx8",
+                "dbx",
+                "de",
+                "debug_swap",
+                "decodeassists",
+                "erms",
+                "extapic",
+                "extd_apicid",
+                "f16c",
+                "flushbyasid",
+                "fma",
+                "fpu",
+                "fsgsbase",
+                "fsrm",
+                "fxsr",
+                "fxsr_opt",
+                "ht",
+                "hw_pstate",
+                "ibpb",
+                "ibpb_exit_to_user",
+                "ibrs",
+                "ibs",
+                "invpcid",
+                "irperf",
+                "lahf_lm",
+                "lbrv",
+                "lm",
+                "mba",
+                "mca",
+                "mce",
+                "misalignsse",
+                "mmx",
+                "mmxext",
+                "monitor",
+                "movbe",
+                "msr",
+                "mtrr",
+                "mwaitx",
+                "nonstop_tsc",
+                "nopl",
+                "npt",
+                "nrip_save",
+                "nx",
+                "ospke",
+                "osvw",
+                "osxsave",
+                "overflow_recov",
+                "pae",
+                "pat",
+                "pausefilter",
+                "pci_l2i",
+                "pcid",
+                "pclmulqdq",
+                "pdpe1gb",
+                "perfctr_core",
+                "perfctr_llc",
+                "perfctr_nb",
+                "pfthreshold",
+                "pge",
+                "pku",
+                "pni",
+                "popcnt",
+                "pqe",
+                "pqm",
+                "pse",
+                "pse36",
+                "rapl",
+                "rdpid",
+                "rdpru",
+                "rdrand",
+                "rdrnd",
+                "rdseed",
+                "rdt_a",
+                "rdtscp",
+                "rep_good",
+                "sep",
+                "sha",
+                "sha_ni",
+                "skinit",
+                "smap",
+                "smca",
+                "smep",
+                "ssbd",
+                "sse",
+                "sse2",
+                "sse4_1",
+                "sse4_2",
+                "sse4a",
+                "ssse3",
+                "stibp",
+                "succor",
+                "svm",
+                "svm_lock",
+                "syscall",
+                "tce",
+                "topoext",
+                "tsc",
+                "tsc_scale",
+                "umip",
+                "user_shstk",
+                "v_spec_ctrl",
+                "v_vmsave_vmload",
+                "vaes",
+                "vgif",
+                "vmcb_clean",
+                "vme",
+                "vmmcall",
+                "vpclmulqdq",
+                "wbnoinvd",
+                "wdt",
+                "x2apic",
+                "xgetbv1",
+                "xsave",
+                "xsavec",
+                "xsaveerptr",
+                "xsaveopt",
+                "xsaves"
+            ],
+            "l3_cache_size": 524288,
+            "l2_cache_size": 33554432,
+            "l1_data_cache_size": 2097152,
+            "l1_instruction_cache_size": 2097152,
+            "l2_cache_line_size": 512,
+            "l2_cache_associativity": 6
+        }
+    },
+    "commit_info": {
+        "id": "482adf444ebae0ed20186c713501ed3257ec8b01",
+        "time": "2026-10-13T10:58:15+00:00",
+        "author_time": "2026-10-13T10:58:15+00:00",
+        "dirty": true,
+        "project": "dementiaformer",
+        "branch": "main"
+    },
+    "benchmarks": [
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-1-delphi]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-1-delphi]",
+            "params": {
+                "device": "cpu-1",
+                "name": "delphi"
+            },
+            "param": "cpu-1-delphi",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 5.23272156342864,
+                "max": 6.131942716427147,
+                "mean": 5.634060174226761,
+                "stddev": 0.2462057195816507,
+                "rounds": 20,
+                "median": 5.678332045208663,
+                "iqr": 0.41683222679421306,
+                "q1": 5.409397871699184,
+                "q3": 5.826230098493397,
+                "iqr_outliers": 0,
+                "stddev_outliers": 8,
+                "outliers": "8;0",
+                "ld15iqr": 5.23272156342864,
+                "hd15iqr": 6.131942716427147,
+                "ops": 0.1774918920061488,
+                "total": 112.68120348453522,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-1-delphi_v2]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-1-delphi_v2]",
+            "params": {
+                "device": "cpu-1",
+                "name": "delphi_v2"
+            },
+            "param": "cpu-1-delphi_v2",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 4.448550987057388,
+                "max": 4.566327661275864,
+                "mean": 4.505608247267082,
+                "stddev": 0.03383850981170607,
+                "rounds": 20,
+                "median": 4.508938321843743,
+                "iqr": 0.05373115558177233,
+                "q1": 4.477608043700457,
+                "q3": 4.531339199282229,
+                "iqr_outliers": 0,
+                "stddev_outliers": 7,
+                "outliers": "7;0",
+                "ld15iqr": 4.448550987057388,
+                "hd15iqr": 4.566327661275864,
+                "ops": 0.2219456164673347,
+                "total": 90.11216494534165,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-1-delphi_v2_motorhead]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-1-delphi_v2_motorhead]",
+            "params": {
+                "device": "cpu-1",
+                "name": "delphi_v2_motorhead"
+            },
+            "param": "cpu-1-delphi_v2_motorhead",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 8.359757183119655,
+                "max": 8.486806307919323,
+                "mean": 8.428302422119305,
+                "stddev": 0.03024585137524009,
+                "rounds": 20,
+                "median": 8.422933178488165,
+                "iqr": 0.03070820216089487,
+                "q1": 8.413513604551554,
+                "q3": 8.444221806712449,
+                "iqr_outliers": 1,
+                "stddev_outliers": 5,
+                "outliers": "5;1",
+                "ld15iqr": 8.393447810783982,
+                "hd15iqr": 8.486806307919323,
+                "ops": 0.11864785456387895,
+                "total": 168.5660484423861,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-4-delphi]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-4-delphi]",
+            "params": {
+                "device": "cpu-4",
+                "name": "delphi"
+            },
+            "param": "cpu-4-delphi",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.7377365622669458,
+                "max": 2.152810599654913,
+                "mean": 1.9586890671402215,
+                "stddev": 0.09614028255975203,
+                "rounds": 20,
+                "median": 1.9651794992387295,
+                "iqr": 0.137016867287457,
+                "q1": 1.895405724644661,
+                "q3": 2.032422591932118,
+                "iqr_outliers": 0,
+                "stddev_outliers": 6,
+                "outliers": "6;0",
+                "ld15iqr": 1.7377365622669458,
+                "hd15iqr": 2.152810599654913,
+                "ops": 0.5105455566053918,
+                "total": 39.17378134280443,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-4-delphi_v2]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-4-delphi_v2]",
+            "params": {
+                "device": "cpu-4",
+                "name": "delphi_v2"
+            },
+            "param": "cpu-4-delphi_v2",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 2.0023262947797775,
+                "max": 2.0887597240507603,
+                "mean": 2.0431112159509213,
+                "stddev": 0.02119433535628561,
+                "rounds": 20,
+                "median": 2.045384794007987,
+                "iqr": 0.023840869311243296,
+                "q1": 2.0278064887970686,
+                "q3": 2.051647358108312,
+                "iqr_outliers": 1,
+                "stddev_outliers": 6,
+                "outliers": "6;1",
+                "ld15iqr": 2.0023262947797775,
+                "hd15iqr": 2.0887597240507603,
+                "ops": 0.4894496159547399,
+                "total": 40.862224319018424,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-4-delphi_v2_motorhead]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-4-delphi_v2_motorhead]",
+            "params": {
+                "device": "cpu-4",
+                "name": "delphi_v2_motorhead"
+            },
+            "param": "cpu-4-delphi_v2_motorhead",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 3.3647903194651008,
+                "max": 3.7004752047359943,
+                "mean": 3.4880497915670277,
+                "stddev": 0.122108979302589,
+                "rounds": 20,
+                "median": 3.4140177820809186,
+                "iqr": 0.22056073136627674,
+                "q1": 3.3922516526654363,
+                "q3": 3.612812384031713,
+                "iqr_outliers": 0,
+                "stddev_outliers": 6,
+                "outliers": "6;0",
+                "ld15iqr": 3.3647903194651008,
+                "hd15iqr": 3.7004752047359943,
+                "ops": 0.286693155131465,
+                "total": 69.76099583134055,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-16-delphi]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-16-delphi]",
+            "params": {
+                "device": "cpu-16",
+                "name": "delphi"
+            },
+            "param": "cpu-16-delphi",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.7131221583113074,
+                "max": 0.8499298878014088,
+                "mean": 0.7786056291311979,
+                "stddev": 0.03940418613321837,
+                "rounds": 20,
+                "median": 0.7708395929075778,
+                "iqr": 0.04645517049357295,
+                "q1": 0.7546519236639142,
+                "q3": 0.8011070941574872,
+                "iqr_outliers": 0,
+                "stddev_outliers": 8,
+                "outliers": "8;0",
+                "ld15iqr": 0.7131221583113074,
+                "hd15iqr": 0.8499298878014088,
+                "ops": 1.2843472517863037,
+                "total": 15.572112582623959,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-16-delphi_v2]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-16-delphi_v2]",
+            "params": {
+                "device": "cpu-16",
+                "name": "delphi_v2"
+            },
+            "param": "cpu-16-delphi_v2",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.6982259079813957,
+                "max": 0.7994238780811429,
+                "mean": 0.748629197338596,
+                "stddev": 0.03279662253778399,
+                "rounds": 20,
+                "median": 0.7505330201238394,
+                "iqr": 0.05805574869737029,
+                "q1": 0.7177708921954036,
+                "q3": 0.7758266408927739,
+                "iqr_outliers": 0,
+                "stddev_outliers": 8,
+                "outliers": "8;0",
+                "ld15iqr": 0.6982259079813957,
+                "hd15iqr": 0.7994238780811429,
+                "ops": 1.335774778161253,
+                "total": 14.97258394677192,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cpu-16-delphi_v2_motorhead]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cpu-16-delphi_v2_motorhead]",
+            "params": {
+                "device": "cpu-16",
+                "name": "delphi_v2_motorhead"
+            },
+            "param": "cpu-16-delphi_v2_motorhead",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.470343329012394,
+                "max": 1.6000879304483533,
+                "mean": 1.5114281031303107,
+                "stddev": 0.029249543396162113,
+                "rounds": 20,
+                "median": 1.5056239739060402,
+                "iqr": 0.03240362089127302,
+                "q1": 1.4948736559599638,
+                "q3": 1.5272772768512368,
+                "iqr_outliers": 1,
+                "stddev_outliers": 4,
+                "outliers": "4;1",
+                "ld15iqr": 1.470343329012394,
+                "hd15iqr": 1.6000879304483533,
+                "ops": 0.6616259138816496,
+                "total": 30.228562062606215,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cuda-delphi]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cuda-delphi]",
+            "params": {
+                "device": "cuda",
+                "name": "delphi"
+            },
+            "param": "cuda-delphi",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.058855450712144375,
+                "max": 0.0596576789394021,
+                "mean": 0.05913875983096659,
+                "stddev": 0.0002249861725908512,
+                "rounds": 20,
+                "median": 0.05908497329801321,
+                "iqr": 0.0002556862309575081,
+                "q1": 0.058975971303880215,
+                "q3": 0.05923165753483772,
+                "iqr_outliers": 1,
+                "stddev_outliers": 4,
+                "outliers": "4;1",
+                "ld15iqr": 0.058855450712144375,
+                "hd15iqr": 0.0596576789394021,
+                "ops": 16.909384012418435,
+                "total": 1.1827751966193318,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cuda-delphi_v2]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cuda-delphi_v2]",
+            "params": {
+                "device": "cuda",
+                "name": "delphi_v2"
+            },
+            "param": "cuda-delphi_v2",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.06354680377990007,
+                "max": 0.06407431699335575,
+                "mean": 0.06375039820559322,
+                "stddev": 0.0001197161225271972,
+                "rounds": 20,
+                "median": 0.06374842626973987,
+                "iqr": 0.00010363338515162468,
+                "q1": 0.06367686484009027,
+                "q3": 0.0637804982252419,
+                "iqr_outliers": 2,
+                "stddev_outliers": 5,
+                "outliers": "5;2",
+                "ld15iqr": 0.06354680377990007,
+                "hd15iqr": 0.06394587270915508,
+                "ops": 15.68617652826306,
+                "total": 1.2750079641118646,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "training step",
+            "name": "test_training_step[cuda-delphi_v2_motorhead]",
+            "fullname": "benchmarks/test_steps.py::test_training_step[cuda-delphi_v2_motorhead]",
+            "params": {
+                "device": "cuda",
+                "name": "delphi_v2_motorhead"
+            },
+            "param": "cuda-delphi_v2_motorhead",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.08281627483665943,
+                "max": 0.084019485861063,
+                "mean": 0.08327035857364536,
+                "stddev": 0.00030623532136502473,
+                "rounds": 20,
+                "median": 0.08323077438399196,
+                "iqr": 0.0003760717809200287,
+                "q1": 0.08306950191035867,
+                "q3": 0.0834455736912787,
+                "iqr_outliers": 1,
+                "stddev_outliers": 5,
+                "outliers": "5;1",
+                "ld15iqr": 0.08281627483665943,
+                "hd15iqr": 0.084019485861063,
+                "ops": 12.009075223515309,
+                "total": 1.665407171472907,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-1-delphi]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-1-delphi]",
+            "params": {
+                "device": "cpu-1",
+                "name": "delphi"
+            },
+            "param": "cpu-1-delphi",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.583041057921946,
+                "max": 1.6172680566087365,
+                "mean": 1.5989277654327452,
+                "stddev": 0.009060010692725114,
+                "rounds": 20,
+                "median": 1.5993773913942277,
+                "iqr": 0.013405156321823597,
+                "q1": 1.5920552066527307,
+                "q3": 1.6054603629745543,
+                "iqr_outliers": 0,
+                "stddev_outliers": 6,
+                "outliers": "6;0",
+                "ld15iqr": 1.583041057921946,
+                "hd15iqr": 1.6172680566087365,
+                "ops": 0.6254191225013551,
+                "total": 31.978555308654904,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-1-delphi_v2]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-1-delphi_v2]",
+            "params": {
+                "device": "cpu-1",
+                "name": "delphi_v2"
+            },
+            "param": "cpu-1-delphi_v2",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.349402541294694,
+                "max": 1.3844995461404324,
+                "mean": 1.3693260744214057,
+                "stddev": 0.008547824689438838,
+                "rounds": 20,
+                "median": 1.367811028379947,
+                "iqr": 0.009369836188852787,
+                "q1": 1.3652403722517192,
+                "q3": 1.374610208440572,
+                "iqr_outliers": 1,
+                "stddev_outliers": 6,
+                "outliers": "6;1",
+                "ld15iqr": 1.3557311883196235,
+                "hd15iqr": 1.3844995461404324,
+                "ops": 0.7302862471398855,
+                "total": 27.386521488428116,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-1-delphi_v2_motorhead]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-1-delphi_v2_motorhead]",
+            "params": {
+                "device": "cpu-1",
+                "name": "delphi_v2_motorhead"
+            },
+            "param": "cpu-1-delphi_v2_motorhead",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 1.8855174044147134,
+                "max": 1.9562675012275577,
+                "mean": 1.9150391309522092,
+                "stddev": 0.01727104474760349,
+                "rounds": 20,
+                "median": 1.911345994565636,
+                "iqr": 0.019637492951005697,
+                "q1": 1.903354896698147,
+                "q3": 1.9229923896491528,
+                "iqr_outliers": 1,
+                "stddev_outliers": 5,
+                "outliers": "5;1",
+                "ld15iqr": 1.8855174044147134,
+                "hd15iqr": 1.9562675012275577,
+                "ops": 0.522182541253229,
+                "total": 38.300782619044185,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-4-delphi]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-4-delphi]",
+            "params": {
+                "device": "cpu-4",
+                "name": "delphi"
+            },
+            "param": "cpu-4-delphi",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.5601159585639834,
+                "max": 0.5706070307642221,
+                "mean": 0.5642559745814651,
+                "stddev": 0.0024560615287580194,
+                "rounds": 20,
+                "median": 0.5635722186416388,
+                "iqr": 0.0025016781874001026,
+                "q1": 0.5628339336253703,
+                "q3": 0.5653356118127704,
+                "iqr_outliers": 1,
+                "stddev_outliers": 5,
+                "outliers": "5;1",
+                "ld15iqr": 0.5601159585639834,
+                "hd15iqr": 0.5706070307642221,
+                "ops": 1.7722453018627697,
+                "total": 11.285119491629303,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-4-delphi_v2]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-4-delphi_v2]",
+            "params": {
+                "device": "cpu-4",
+                "name": "delphi_v2"
+            },
+            "param": "cpu-4-delphi_v2",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.576165140606463,
+                "max": 0.5903310878202319,
+                "mean": 0.5821576785296202,
+                "stddev": 0.0027659162521246083,
+                "rounds": 20,
+                "median": 0.5817405045963824,
+                "iqr": 0.0024940124712884426,
+                "q1": 0.5807305467315018,
+                "q3": 0.5832245592027903,
+                "iqr_outliers": 2,
+                "stddev_outliers": 3,
+                "outliers": "3;2",
+                "ld15iqr": 0.579699819907546,
+                "hd15iqr": 0.5903310878202319,
+                "ops": 1.7177476770996847,
+                "total": 11.643153570592403,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-4-delphi_v2_motorhead]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-4-delphi_v2_motorhead]",
+            "params": {
+                "device": "cpu-4",
+                "name": "delphi_v2_motorhead"
+            },
+            "param": "cpu-4-delphi_v2_motorhead",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.7929866537451744,
+                "max": 0.8159133670851588,
+                "mean": 0.8011176382191479,
+                "stddev": 0.0056485312322042455,
+                "rounds": 20,
+                "median": 0.800238458905369,
+                "iqr": 0.005408280063420534,
+                "q1": 0.7979138223454356,
+                "q3": 0.8033221024088562,
+                "iqr_outliers": 1,
+                "stddev_outliers": 7,
+                "outliers": "7;1",
+                "ld15iqr": 0.7929866537451744,
+                "hd15iqr": 0.8159133670851588,
+                "ops": 1.2482561265570928,
+                "total": 16.02235276438296,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-16-delphi]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-16-delphi]",
+            "params": {
+                "device": "cpu-16",
+                "name": "delphi"
+            },
+            "param": "cpu-16-delphi",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.18717268202453852,
+                "max": 0.1988848578184843,
+                "mean": 0.1902595346327871,
+                "stddev": 0.0029023237694733436,
+                "rounds": 20,
+                "median": 0.18959554424509406,
+                "iqr": 0.004286515060812235,
+                "q1": 0.18797888653352857,
+                "q3": 0.1922654015943408,
+                "iqr_outliers": 1,
+                "stddev_outliers": 4,
+                "outliers": "4;1",
+                "ld15iqr": 0.18717268202453852,
+                "hd15iqr": 0.1988848578184843,
+                "ops": 5.255978376747652,
+                "total": 3.805190692655742,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-16-delphi_v2]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-16-delphi_v2]",
+            "params": {
+                "device": "cpu-16",
+                "name": "delphi_v2"
+            },
+            "param": "cpu-16-delphi_v2",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.1821765210479498,
+                "max": 0.19416578393429518,
+                "mean": 0.18500519483350217,
+                "stddev": 0.0029649284765248117,
+                "rounds": 20,
+                "median": 0.18368499260395765,
+                "iqr": 0.003489196766167879,
+                "q1": 0.18329024640843272,
+                "q3": 0.1867794431746006,
+                "iqr_outliers": 1,
+                "stddev_outliers": 2,
+                "outliers": "2;1",
+                "ld15iqr": 0.1821765210479498,
+                "hd15iqr": 0.19416578393429518,
+                "ops": 5.405253624904765,
+                "total": 3.7001038966700435,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cpu-16-delphi_v2_motorhead]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cpu-16-delphi_v2_motorhead]",
+            "params": {
+                "device": "cpu-16",
+                "name": "delphi_v2_motorhead"
+            },
+            "param": "cpu-16-delphi_v2_motorhead",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.2660854635760188,
+                "max": 0.2827644655480981,
+                "mean": 0.2702093138359487,
+                "stddev": 0.004149456349832392,
+                "rounds": 20,
+                "median": 0.2691964921541512,
+                "iqr": 0.0028129401616752148,
+                "q1": 0.26784407207742333,
+                "q3": 0.27065701223909855,
+                "iqr_outliers": 3,
+                "stddev_outliers": 3,
+                "outliers": "3;3",
+                "ld15iqr": 0.2660854635760188,
+                "hd15iqr": 0.2760026529431343,
+                "ops": 3.7008346818390083,
+                "total": 5.404186276718974,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cuda-delphi]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cuda-delphi]",
+            "params": {
+                "device": "cuda",
+                "name": "delphi"
+            },
+            "param": "cuda-delphi",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.019539305940270424,
+                "max": 0.02074515074491501,
+                "mean": 0.01973671931773424,
+                "stddev": 0.00029075093439014663,
+                "rounds": 20,
+                "median": 0.019621167331933975,
+                "iqr": 0.0001116674393415451,
+                "q1": 0.01959865912795067,
+                "q3": 0.019710326567292213,
+                "iqr_outliers": 3,
+                "stddev_outliers": 2,
+                "outliers": "2;3",
+                "ld15iqr": 0.019539305940270424,
+                "hd15iqr": 0.020021283999085426,
+                "ops": 50.66698187785746,
+                "total": 0.39473438635468483,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cuda-delphi_v2]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cuda-delphi_v2]",
+            "params": {
+                "device": "cuda",
+                "name": "delphi_v2"
+            },
+            "param": "cuda-delphi_v2",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.023237746208906174,
+                "max": 0.023316926322877407,
+                "mean": 0.023269638931378723,
+                "stddev": 1.7811544477814017e-05,
+                "rounds": 20,
+                "median": 0.023270268458873034,
+                "iqr": 1.8670223653316498e-05,
+                "q1": 0.02325877733528614,
+                "q3": 0.023277447558939457,
+                "iqr_outliers": 1,
+                "stddev_outliers": 5,
+                "outliers": "5;1",
+                "ld15iqr": 0.023237746208906174,
+                "hd15iqr": 0.023316926322877407,
+                "ops": 42.974452803026374,
+                "total": 0.46539277862757444,
+                "iterations": 1
+            }
+        },
+        {
+            "group": "inference",
+            "name": "test_inference[cuda-delphi_v2_motorhead]",
+            "fullname": "benchmarks/test_steps.py::test_inference[cuda-delphi_v2_motorhead]",
+            "params": {
+                "device": "cuda",
+                "name": "delphi_v2_motorhead"
+            },
+            "param": "cuda-delphi_v2_motorhead",
+            "extra_info": {
+                "people": 128
+            },
+            "options": {
+                "disable_gc": false,
+                "timer": "perf_counter",
+                "min_rounds": 5,
+                "max_time": 1.0,
+                "min_time": 5e-06,
+                "precision": null,
+                "confidence": null,
+                "warmup": false
+            },
+            "stats": {
+                "min": 0.02461165189743042,
+                "max": 0.024708415381610394,
+                "mean": 0.02466858378611505,
+                "stddev": 3.1837393409226854e-05,
+                "rounds": 20,
+                "median": 0.024680678267031908,
+                "iqr": 5.556084215641022e-05,
+                "q1": 0.02463707560673356,
+                "q3": 0.02469263644888997,
+                "iqr_outliers": 0,
+                "stddev_outliers": 6,
+                "outliers": "6;0",
+                "ld15iqr": 0.02461165189743042,
+                "hd15iqr": 0.024708415381610394,
+                "ops": 40.537389931677374,
+                "total": 0.493371675722301,
+                "iterations": 1
+            }
+        }
+    ],
+    "datetime": "2026-10-13T13:24:51.076745+00:00",
+    "version": "5.3.0"
+}
