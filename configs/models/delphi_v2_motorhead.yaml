@@ -1,0 +1,40 @@
+# Settings of Delphi v2 with a MOTOR head (src/models/delphi_v2_motorhead.py)
+# and of its training: the size of Delphi-2M, trained as Delphi trains it
+# (config/train_delphi.py and train.py of github.com/gerstung-lab/Delphi at
+# commit fb72166)
+
+model:
+  n_layer: 12
+  n_head: 12
+  n_embd: 120
+  dropout: 0.0
+  token_dropout: 0.0
+  mask_ties: true
+  # Boundaries of the time bins, in years after a token. From age 70, 15 and
+  # 25 years are the horizons 85 and 95
+  bin_boundaries: [1, 2, 5, 10, 15, 25]
+
+training:
+  # People per batch, and tokens per person
+  batch_size: 128
+  block_size: 96
+  # Learning rate: warmed up over warmup_steps, then lowered along a cosine to
+  # min_learning_rate at max_steps, the last step
+  learning_rate: 6.0e-4
+  min_learning_rate: 6.0e-5
+  warmup_steps: 1000
+  max_steps: 150000
+  # AdamW, with weight decay on the weights of linear layers only
+  beta1: 0.9
+  beta2: 0.99
+  weight_decay: 0.2
+  # Gradients clipped at this norm
+  grad_clip: 1.0
+  # Every log_interval steps, the batch loss is logged. Every eval_interval
+  # steps, the loss on eval_batches batches of training and of validation people
+  log_interval: 25
+  eval_interval: 250
+  eval_batches: 25
+  # "No event" tokens: one every no_event_years on average
+  no_event_years: 5
+  seed: 42

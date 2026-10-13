@@ -10,6 +10,8 @@ from typing import Any, Final
 DEFAULT_CONFIG_DIR: Final = Path("configs")
 DATA_CONFIG_DIR: Final = DEFAULT_CONFIG_DIR / "data"
 MODEL_CONFIG_DIR: Final = DEFAULT_CONFIG_DIR / "models"
+# CPU threads for PyTorch, unless --threads says otherwise: the server is shared
+DEFAULT_N_THREADS: Final = 16
 # Last register date, as in 5 predictions.R
 REGISTER_END: Final = dt.date(2022, 12, 31)
 # The 22 ICD-10 chapters, as in 3 strings.R: (first code, last code, name). A
