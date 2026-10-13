@@ -3,16 +3,24 @@
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
+import numpy as np
 import polars as pl
 import yaml
 
 from src._config import (
     DEFAULT_CONFIG_DIR,
+    DEMENTIA_CODE_PREFIXES,
     EARLIEST_REGISTER_DATE,
+    EVENT_KINDS,
+    ICD10_CHAPTERS,
+    MIN_PEOPLE_PER_CODE,
     MINIMUM_SPELL_DAYS,
     REGISTER_END,
+    SPECIAL_TOKENS,
     VALIDATION_FOLD,
+    VARIANTS,
 )
+from src.icd10 import icd10_chapter
 
 
 def age_days(date: str) -> pl.Expr:
@@ -81,21 +89,33 @@ def make_persons(
 def make_diagnoses(
     per_diagnosis_raw: pl.DataFrame, persons: pl.DataFrame
 ) -> pl.DataFrame:
-    """One row per person and three-character code, at its first contact in the record."""
+    """One row per person, kind and three-character code, at its first contact in the record."""
     # Columns selected: PNR, admission date, diagnosis
     # Filter 1: known admission date and diagnosis
     # Filter 2: admission inside the record
     # Create columns:
+    #   - KIND: dementia_code for a code of the dementia definition of script 2
+    #     (read on the full code: F02.0 is one, F02.1 is not), diagnosis
+    #     otherwise
     #   - EVENT: the first three characters of the diagnosis
-    #   - AGE_DAYS: age at the first contact with that code
+    #   - AGE_DAYS: age at the first contact with that kind and code
+    is_dementia_code = pl.any_horizontal(
+        pl.col("DIAG").str.starts_with(prefix) for prefix in DEMENTIA_CODE_PREFIXES
+    )
     return (
         per_diagnosis_raw.select("PNR", "INDATE", "DIAG")
         .filter(pl.col("INDATE").is_not_null(), pl.col("DIAG").is_not_null())
         .join(persons, on="PNR")
         .filter(inside_record("INDATE"))
-        .group_by("PNR", EVENT=pl.col("DIAG").str.slice(0, 3))
+        .group_by(
+            "PNR",
+            KIND=pl.when(is_dementia_code)
+            .then(pl.lit("dementia_code"))
+            .otherwise(pl.lit("diagnosis")),
+            EVENT=pl.col("DIAG").str.slice(0, 3),
+        )
         .agg(AGE_DAYS=age_days("INDATE").min())
-        .select("PNR", "AGE_DAYS", KIND=pl.lit("diagnosis"), EVENT="EVENT")
+        .select("PNR", "AGE_DAYS", "KIND", "EVENT")
     )
 
 
@@ -130,6 +150,8 @@ def make_abroad(per_crossing_raw: pl.DataFrame, persons: pl.DataFrame) -> pl.Dat
     #   - NEXT_CODE, NEXT_DATE: the person's next crossing
     #   - IS_FIRST: the person's first crossing
     previous_code = pl.col("INDUD_KODE").shift(1).over("PNR")
+    # One row per border crossing: PNR, HAEND_DATO, INDUD_KODE, NEXT_CODE,
+    # NEXT_DATE, IS_FIRST
     crossings = (
         per_crossing_raw.select("PNR", "HAEND_DATO", "INDUD_KODE")
         .join(persons.select("PNR"), on="PNR", how="semi")
@@ -153,14 +175,19 @@ def make_abroad(per_crossing_raw: pl.DataFrame, persons: pl.DataFrame) -> pl.Dat
     #   - END_DATE: return, or the index date if later or unknown; a period
     #     still open a year before the index date ends there
     # Filter: periods of at least MINIMUM_SPELL_DAYS
+    # One row per departure: PNR, FROM_DATE, TO_DATE (null without a return)
     departures = crossings.filter(pl.col("INDUD_KODE") == "U").select(
         "PNR",
         FROM_DATE="HAEND_DATO",
         TO_DATE=pl.when(pl.col("NEXT_CODE") == "I").then(pl.col("NEXT_DATE")),
     )
+    # One row per person whose first crossing is a return: PNR, FROM_DATE (null),
+    # TO_DATE
     abroad_from_start = crossings.filter(
         pl.col("IS_FIRST"), pl.col("INDUD_KODE") == "I"
     ).select("PNR", FROM_DATE=pl.lit(None, pl.Date), TO_DATE="HAEND_DATO")
+    # One row per period abroad: PNR, FROM_DATE, TO_DATE, the columns of
+    # persons, START_DATE, END_DATE
     periods = (
         pl.concat([departures, abroad_from_start])
         .join(persons, on="PNR")
@@ -217,6 +244,7 @@ def make_timelines(
     """One row per event: diagnoses, dementia, death, periods abroad and sex."""
     # Filter: test people's events before the index date only, so that their
     #   outcome never reaches the models
+    # One row per event, everyone's whole record: PNR, AGE_DAYS, KIND, EVENT
     events = pl.concat(
         [
             make_diagnoses(per_diagnosis_raw, persons),
@@ -236,6 +264,157 @@ def make_timelines(
     )
 
 
+def select_events(timelines: pl.DataFrame, choice: str) -> pl.DataFrame:
+    """Delphi's events or ours (EVENT_KINDS): one row per PNR, AGE_DAYS, KIND and EVENT."""
+    # Filter: the kinds of events of EVENT_KINDS[choice]
+    # Create columns:
+    #   - KIND: diagnosis for the dementia codes too (kept by Delphi's events)
+    return timelines.filter(pl.col("KIND").is_in(EVENT_KINDS[choice])).with_columns(
+        KIND=pl.when(pl.col("KIND") == "dementia_code")
+        .then(pl.lit("diagnosis"))
+        .otherwise(pl.col("KIND"))
+    )
+
+
+def select_codes(
+    events: pl.DataFrame, choice: str, delphi_codes: list[str]
+) -> pl.DataFrame:
+    """The diagnoses with a code of Delphi's labels.csv only (delphi), or all of them (ours)."""
+    # Filter: for delphi, diagnoses with a code of delphi_codes only, as Delphi
+    #   drops the others
+    if choice == "ours":
+        return events
+    return events.filter(
+        (pl.col("KIND") != "diagnosis") | pl.col("EVENT").is_in(delphi_codes)
+    )
+
+
+def cut_at_index(events: pl.DataFrame, persons: pl.DataFrame) -> pl.DataFrame:
+    """Everyone's events before the index date only (test people's already stop there)."""
+    return (
+        events.join(persons.select("PNR", "INDEX_AGE_DAYS"), on="PNR")
+        .filter(pl.col("AGE_DAYS") < pl.col("INDEX_AGE_DAYS"))
+        .select("PNR", "AGE_DAYS", "KIND", "EVENT")
+    )
+
+
+def make_vocabulary(
+    events: pl.DataFrame,
+    persons: pl.DataFrame,
+    choice: str,
+    labels: pl.DataFrame | None,
+) -> pl.DataFrame:
+    """Delphi's labels.csv (delphi), or ours from a variant's events: one row per token, TOKEN and NAME."""
+    if choice == "delphi":
+        assert labels is not None
+        return labels
+    # Ours. Create rows, in this order:
+    #   - SPECIAL_TOKENS: PAD is 0, NO_EVENT is 1
+    #   - RARE_<chapter>: one per ICD-10 chapter, for the rarer codes
+    #   - every code that at least MIN_PEOPLE_PER_CODE training people have,
+    #     in alphabetical order (validation and test people are not counted)
+    # The codes with their own token, in alphabetical order
+    codes = (
+        events.filter(pl.col("KIND") == "diagnosis")
+        .join(persons.filter(pl.col("SPLIT") == "train").select("PNR"), on="PNR")
+        .group_by("EVENT")
+        .agg(PEOPLE=pl.col("PNR").n_unique())
+        .filter(pl.col("PEOPLE") >= MIN_PEOPLE_PER_CODE)
+        .sort("EVENT")["EVENT"]
+        .to_list()
+    )
+    rare = [f"RARE_{name}" for _, _, name in ICD10_CHAPTERS]
+    names = [*SPECIAL_TOKENS, *rare, *codes]
+    return pl.DataFrame(
+        {"TOKEN": range(len(names)), "NAME": names},
+        schema={"TOKEN": pl.Int32, "NAME": pl.String},
+    )
+
+
+def tokenise(events: pl.DataFrame, vocabulary: pl.DataFrame) -> pl.DataFrame:
+    """A variant's events as token numbers of a vocabulary: one row per PNR, AGE_DAYS and TOKEN."""
+    # Create columns:
+    #   - NAME: the event, or for a code without its own token RARE_<chapter>,
+    #     or UNKNOWN_CODE outside every chapter
+    #   - TOKEN: the number of NAME in the vocabulary
+    # Filter: each token at its first age only, since the rarer codes of a
+    #   chapter share one token
+    # Sort: by person, age and token (DEATH comes last: it ends the record)
+    has_token = pl.col("EVENT").is_in(vocabulary["NAME"].to_list())
+    chapter = icd10_chapter(pl.col("EVENT"))
+    # One row per event: PNR, AGE_DAYS, KIND, EVENT, NAME, TOKEN
+    named = events.with_columns(
+        NAME=pl.when((pl.col("KIND") != "diagnosis") | has_token)
+        .then(pl.col("EVENT"))
+        .when(chapter.is_not_null())
+        .then(pl.lit("RARE_") + chapter)
+        .otherwise(pl.lit("UNKNOWN_CODE"))
+    ).join(vocabulary, on="NAME", how="left")
+    # Every event has a token
+    assert named["TOKEN"].null_count() == 0, named.filter(pl.col("TOKEN").is_null())
+    return (
+        named.group_by("PNR", "TOKEN")
+        .agg(pl.col("AGE_DAYS").min())
+        .select("PNR", "AGE_DAYS", "TOKEN")
+        .sort("PNR", "AGE_DAYS", "TOKEN")
+    )
+
+
+def read_delphi_labels(path: Path) -> pl.DataFrame:
+    """Delphi's labels.csv: each line's NAME and its TOKEN number in Delphi's files."""
+    # Create columns:
+    #   - NAME: the first word of the line, as in Delphi (A00, Female), with
+    #     Delphi's Death named DEATH, as in our timelines
+    #   - TOKEN: the line's index minus 1, as Delphi's data has it: Female is 1
+    #     and Death 1268. Delphi adds 1 when it builds batches, so that 0 is
+    #     padding and 1 is no event
+    lines = path.read_text().splitlines()
+    return pl.DataFrame(
+        {
+            "NAME": [line.split(" ")[0] for line in lines],
+            "TOKEN": range(-1, len(lines) - 1),
+        },
+        schema={"NAME": pl.String, "TOKEN": pl.Int32},
+    ).with_columns(NAME=pl.col("NAME").replace("Death", "DEATH"))
+
+
+def write(
+    tokens: pl.DataFrame,
+    vocabulary: pl.DataFrame,
+    persons: pl.DataFrame,
+    folder: Path,
+    choice: str,
+) -> None:
+    """Write a variant's files: Delphi's (delphi) or ours (events.parquet, vocab.csv)."""
+    folder.mkdir(exist_ok=True)
+    if choice == "ours":
+        tokens.write_parquet(folder / "events.parquet")
+        vocabulary.write_csv(folder / "vocab.csv")
+        return
+    # Delphi's format: train.bin, val.bin and test.bin, uint32 rows of (patient
+    # id, age in days, token), the rows of a patient together. The patient id is
+    # the person's row in persons (sorted by PNR); patients.parquet maps it back
+    # to the PNR
+    # One row per person: PATIENT_ID (the row number), PNR, SPLIT
+    patients = persons.select("PNR", "SPLIT").with_row_index("PATIENT_ID")
+    patient_id = dict(patients.select("PNR", "PATIENT_ID").iter_rows())
+    # One row per token of a person: PNR, AGE_DAYS, TOKEN, PATIENT_ID, SPLIT
+    rows = tokens.with_columns(
+        PATIENT_ID=pl.col("PNR").replace_strict(patient_id, return_dtype=pl.UInt32)
+    ).join(patients.select("PNR", "SPLIT"), on="PNR", maintain_order="left")
+    for split, name in [("train", "train"), ("validation", "val"), ("test", "test")]:
+        # One row per token of a person of the split: patient id, age in days,
+        # token (uint32)
+        array = (
+            rows.filter(pl.col("SPLIT") == split)
+            .select("PATIENT_ID", "AGE_DAYS", "TOKEN")
+            .to_numpy()
+            .astype(np.uint32)
+        )
+        array.tofile(folder / f"{name}.bin")
+    patients.select("PATIENT_ID", "PNR").write_parquet(folder / "patients.parquet")
+
+
 def parse_args() -> Namespace:
     """The command-line arguments."""
     parser = ArgumentParser(description=__doc__)
@@ -253,16 +432,26 @@ def main() -> None:
     paths = {name: root / path for name, path in config["paths"].items()}
 
     print("Reading the data...", end=" ")
+    # One row per person (script 2): PNR, SEX, BIRTH_DATE, DEATH_DATE,
+    # EMIGRATION_DATE, DEMENTIA_INCIDENT_DATE, EVENT_TYPE, ...
     per_person_raw = pl.read_parquet(paths["persons"])
+    # One row per diagnosis at a hospital contact (script 2): PNR, INDATE, DIAG
     per_diagnosis_raw = pl.read_parquet(
         paths["contacts"], columns=["PNR", "INDATE", "DIAG"]
     )
+    # One row per border crossing (script 2): PNR, HAEND_DATO, INDUD_KODE (U out,
+    # I in)
     per_crossing_raw = pl.read_parquet(paths["migration"])
+    # One row per person (split.R): PNR, in_training, fold
     split = pl.read_parquet(paths["split"])
     print("Done")
 
     print("Making the timelines...", end=" ")
+    # One row per person: PNR, SEX, BIRTH_DATE, DEATH_DATE, EMIGRATION_DATE,
+    # DEMENTIA_INCIDENT_DATE, SPLIT, INDEX_DATE, WINDOW_START, RECORD_END_DATE,
+    # INDEX_AGE_DAYS, OBSERVED_UNTIL_AGE_DAYS
     persons = make_persons(per_person_raw, split, config["index_age"])
+    # One row per event: PNR, AGE_DAYS, KIND, EVENT
     timelines = make_timelines(per_diagnosis_raw, per_crossing_raw, persons)
     print("Done")
 
@@ -284,6 +473,25 @@ def main() -> None:
     print(f"{persons.height} people, {timelines.height} events -> {paths['tokens']}")
     print(persons["SPLIT"].value_counts().sort("SPLIT"))
     print(timelines["KIND"].value_counts().sort("KIND"))
+
+    # Every variant: the five steps, with the choices of its row in VARIANTS
+    # One row per line of Delphi's labels.csv: NAME, TOKEN
+    labels = read_delphi_labels(paths["delphi_labels"])
+    for variant, choices in VARIANTS.items():
+        # One row per event of the variant: PNR, AGE_DAYS, KIND, EVENT
+        events = select_events(timelines, choices["events"])
+        events = select_codes(events, choices["codes"], labels["NAME"].to_list())
+        if choices["cut_at_index"]:
+            events = cut_at_index(events, persons)
+        # One row per token of the variant's vocabulary: TOKEN, NAME
+        vocabulary = make_vocabulary(events, persons, choices["vocabulary"], labels)
+        # One row per token of a person: PNR, AGE_DAYS, TOKEN
+        tokens = tokenise(events, vocabulary)
+        folder = paths["tokens"] / variant
+        write(tokens, vocabulary, persons, folder, choices["vocabulary"])
+        print(
+            f"{variant}: {tokens.height} events, vocabulary of {vocabulary.height} -> {folder}"
+        )
 
 
 if __name__ == "__main__":

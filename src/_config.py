@@ -3,7 +3,7 @@
 import datetime as dt
 
 from pathlib import Path
-from typing import Final
+from typing import Any, Final
 
 # Folder of the settings files, relative to the repository root
 DEFAULT_CONFIG_DIR: Final = Path("configs")
@@ -42,3 +42,75 @@ EARLIEST_REGISTER_DATE: Final = dt.date(1969, 1, 1)
 MINIMUM_SPELL_DAYS: Final = 180
 # The fold of the training set held out to validate the models
 VALIDATION_FOLD: Final = 5
+# Tokens with a fixed number, in this order: PAD (0) fills the end of short
+# timelines in a batch, NO_EVENT (1) marks an age at which nothing happened
+SPECIAL_TOKENS: Final = [
+    "PAD",
+    "NO_EVENT",
+    "DEATH",
+    "DEMENTIA",
+    "ABROAD_START",
+    "ABROAD_END",
+    "UNKNOWN_CODE",
+    # Sex, at age 0
+    "Female",
+    "Male",
+]
+# A code in fewer training people shares its chapter's token (the minimum
+# cell count of 5 predictions.R)
+MIN_PEOPLE_PER_CODE: Final = 5
+# Diagnoses that define dementia, as in the user's script 2 (Hvidberg et al.
+# 2016): a code is a dementia code when it starts with one of these
+DEMENTIA_CODE_PREFIXES: Final = [
+    "F00",
+    "F01",
+    "F020",
+    "F039",
+    "G30",
+    "G310B",
+    "G318B",
+    "G318E",
+    "G319",
+]
+# The kinds of timeline events: Delphi's (diagnoses with dementia codes, sex,
+# death) or ours (diagnoses without dementia codes, since DEMENTIA marks
+# dementia; DEMENTIA, death, periods abroad, sex)
+EVENT_KINDS: Final = {
+    "delphi": ["diagnosis", "dementia_code", "sex", "death"],
+    "ours": ["diagnosis", "dementia", "death", "abroad", "sex"],
+}
+# The tokenisation variants: whose events, codes (Delphi's list or all) and
+# vocabulary each uses, and whether everyone's timeline stops before the index
+# date. The files are written in the format of the vocabulary
+VARIANTS: Final[dict[str, dict[str, Any]]] = {
+    "delphi": {
+        "events": "delphi",
+        "codes": "delphi",
+        "vocabulary": "delphi",
+        "cut_at_index": False,
+    },
+    "delphi_min_people": {
+        "events": "delphi",
+        "codes": "delphi",
+        "vocabulary": "ours",
+        "cut_at_index": False,
+    },
+    "delphi_all_codes": {
+        "events": "delphi",
+        "codes": "ours",
+        "vocabulary": "ours",
+        "cut_at_index": False,
+    },
+    "whole_lives": {
+        "events": "ours",
+        "codes": "ours",
+        "vocabulary": "ours",
+        "cut_at_index": False,
+    },
+    "cut_at_index": {
+        "events": "ours",
+        "codes": "ours",
+        "vocabulary": "ours",
+        "cut_at_index": True,
+    },
+}

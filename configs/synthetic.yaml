@@ -17,3 +17,6 @@ paths:
   split: age70_split_and_folds.parquet
   # Made by build_tokens.py: a folder
   tokens: tokens
+  # Delphi's vocabulary, labels.csv of github.com/gerstung-lab/Delphi at
+  # commit fb72166 (data/ukb_real_data/labels.csv)
+  delphi_labels: ../Delphi/labels.csv
