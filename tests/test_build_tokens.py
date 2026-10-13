@@ -7,10 +7,10 @@ import numpy as np
 import polars as pl
 import pytest
 
-from pipeline.build_tokens import (
+from src._config import ICD10_CHAPTERS, SPECIAL_TOKENS
+from src.timelines import make_persons, make_timelines
+from src.tokens import (
     cut_at_index,
-    make_persons,
-    make_timelines,
     make_vocabulary,
     read_delphi_labels,
     select_codes,
@@ -18,7 +18,6 @@ from pipeline.build_tokens import (
     tokenise,
     write,
 )
-from src._config import ICD10_CHAPTERS, SPECIAL_TOKENS
 
 # Everyone's birth date unless a test says otherwise: index date 2000-06-01 at
 # 70, a year before it 1999-06-01
@@ -332,10 +331,10 @@ def test_read_delphi_labels(tmp_path):
     path.write_text("\n".join(DELPHI_LABELS) + "\n")
     labels = dict(read_delphi_labels(path).iter_rows())
     assert (labels["Female"], labels["Male"], labels["F00"], labels["DEATH"]) == (
-        1,
         2,
         3,
-        5,
+        4,
+        6,
     )
 
 
@@ -370,6 +369,15 @@ def test_delphi_tokens_and_files(tmp_path):
     ]
 
     write(tokens, labels, persons, tmp_path, "delphi")
+    # Ours: the final numbers, as Delphi's batches have them
+    assert pl.read_parquet(tmp_path / "events.parquet")["TOKEN"].to_list() == [
+        2,
+        5,
+        4,
+        6,
+    ]
+    assert pl.read_csv(tmp_path / "vocab.csv").height == len(DELPHI_LABELS)
+    # Delphi's: one less (Delphi adds 1 when it builds batches)
     rows = np.fromfile(tmp_path / "train.bin", dtype=np.uint32).reshape(-1, 3)
     assert rows[:, 0].tolist() == [0, 0, 0, 0]
     assert rows[:, 2].tolist() == [1, 4, 3, 5]
