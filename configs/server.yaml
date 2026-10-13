@@ -19,3 +19,5 @@ paths:
   tabular: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_df_born1913_1947_tabular.parquet
   # Made by split.R
   split: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/age70_split_and_folds.parquet
+  # Made by build_tokens.py: a folder
+  tokens: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/Data/tokens

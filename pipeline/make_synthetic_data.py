@@ -1,6 +1,6 @@
 """Make the synthetic data in the layout the pipeline reads, at a given index age."""
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 import numpy as np
@@ -195,7 +195,8 @@ def make_migration(
     ).sort("PNR", "HAEND_DATO")
 
 
-def main() -> None:
+def parse_args() -> Namespace:
+    """The command-line arguments."""
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
         "--config",
@@ -203,7 +204,12 @@ def main() -> None:
         default=DEFAULT_CONFIG_DIR / "synthetic.yaml",
         help="(default: %(default)s)",
     )
-    with open(parser.parse_args().config) as file:
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    with open(args.config) as file:
         config = yaml.safe_load(file)
     root = Path(config["root"])
     index_age = config["index_age"]

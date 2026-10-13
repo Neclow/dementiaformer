@@ -22,6 +22,8 @@ paths:
   tabular: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/age70_df_born1923_1943_tabular.parquet
   # Made by split.R
   split: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/age70_split_and_folds.parquet
+  # Made by build_tokens.py: a folder
+  tokens: workdata/709816/Personal folders/Mathilde/Projects/p1_transformers/synthetic/tokens
 
 # Inputs of make_synthetic_data: the user's synthetic data at age 65, and the
 # ICD-10 coding of scripts/post_install.sh. Paths relative to root

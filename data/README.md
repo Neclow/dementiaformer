@@ -25,3 +25,5 @@ Laid out as on the user's server by `scripts/post_install.sh`.
       columns of the tabular arms (`strings.R`).
     - `age70_split_and_folds.parquet`: one row per person (`PNR`, `in_training`,
       `fold`; `split.R`).
+    - `tokens/`: the timelines, and one folder per tokenisation
+      (`build_tokens.py`; layout in `docs/pipeline.md`).

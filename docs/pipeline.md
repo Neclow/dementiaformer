@@ -88,3 +88,51 @@ test people.
 Writes (path in the config):
 
 - `age70_split_and_folds.parquet`: `PNR`, `in_training`, `fold`
+
+## `build_tokens.py`
+
+Example run:
+
+```bash
+python -m pipeline.build_tokens --config configs/synthetic.yaml
+```
+
+Builds every person's timeline (their events with their ages in days), then one
+tokenisation per variant: the variant picks its events from the timelines and
+gives each one a token number.
+
+- Splits from `split.R`: test outside the training set, validation in fold 5 of
+  the training set, train otherwise. The models train on train only.
+- Events:
+  - diagnoses: the first three characters of the code, at its first contact.
+    Dementia codes are kept, since Delphi uses them.
+  - `DEMENTIA` at `DEMENTIA_INCIDENT_DATE`, the outcome of `5 predictions.R`,
+    and `DEATH`.
+  - `ABROAD_START` and `ABROAD_END` of each period of at least 180 days abroad
+    before the index age, as in `strings.R`.
+  - sex at age 0, as in Delphi.
+- Window: from 1969-01-01 (start of the Psychiatric Central Research Register,
+  as in `strings.R`) or birth if later, to death, emigration or 2022-12-31.
+- Test people's timelines stop before the index date, so that their outcome
+  never reaches the models.
+
+Variants (one folder each, all built in one run):
+
+| Variant        | Events                                                                                     | Vocabulary                                              |
+| -------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| `whole_lives`  | diagnoses without dementia codes, `DEMENTIA`, `DEATH`, periods abroad; whole record        | ours: codes in at least 5 training people, else chapter |
+| `cut_at_index` | the same, but everyone's timeline stops before the index date                              | ours                                                    |
+| `delphi`       | diagnoses with dementia codes, sex, `DEATH`, as Delphi; codes outside its list are dropped | Delphi's `labels.csv`                                   |
+
+Writes, into the `tokens` folder of the config:
+
+```
+tokens/
+  persons.parquet      PNR, SPLIT, INDEX_AGE_DAYS, OBSERVED_UNTIL_AGE_DAYS
+  timelines.parquet    PNR, AGE_DAYS, KIND, EVENT  (shared by every variant)
+  whole_lives/         events.parquet (PNR, AGE_DAYS, TOKEN), vocab.csv
+  cut_at_index/        events.parquet, vocab.csv
+  delphi/              train.bin, val.bin, test.bin (Delphi's format)
+```
+
+The variant folders are not built yet (step 3, parts b to d).

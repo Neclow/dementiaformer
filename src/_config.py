@@ -56,3 +56,10 @@ ICD10_CHAPTERS: Final = [
 EMIGRATION_SHARE: Final = 0.03
 # Random seed
 SEED: Final = 709816
+# No event before this date, as in 3 strings.R (start of the Psychiatric
+# Central Research Register)
+EARLIEST_REGISTER_DATE: Final = dt.date(1969, 1, 1)
+# A shorter period abroad gets no event, as in 3 strings.R
+MINIMUM_SPELL_DAYS: Final = 180
+# The fold of the training set held out to validate the models
+VALIDATION_FOLD: Final = 5
