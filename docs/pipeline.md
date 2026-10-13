@@ -5,6 +5,45 @@ the outputs of the user's scripts 2 and 3. Each takes the name of a settings
 file in `configs/data/`, always given: `synthetic` or `server` (e.g.
 `pixi run split synthetic`).
 
+## Running an arm
+
+An arm is a model (`delphi`, `delphi_v2` or `delphi_v2_motorhead`) trained on
+one variant of the tokens (`delphi`, `delphi_min_people`, `delphi_all_codes`,
+`whole_lives` or `cut_at_index`). Which arms to run is the user's choice. On the
+server, in the conda environment:
+
+1. Once, for every arm: the split, then the tokens.
+
+   ```bash
+   Rscript pipeline/split.R server
+   python -m pipeline.build_tokens server
+   ```
+
+2. For each arm, first the dry runs of its training and its embeddings (a minute
+   at most each, nothing written), then the training. It runs for hours or days:
+   `docs/benchmarks.md` estimates how long. Its folder in `runs/` has
+   `train.log` and `curves.png` to follow it; if the session stops, `--resume`
+   continues from the last evaluation.
+
+   ```bash
+   python -m pipeline.train_torch server delphi whole_lives --dry-run
+   python -m pipeline.extract_embeddings server delphi whole_lives --dry-run
+   python -m pipeline.train_torch server delphi whole_lives
+   ```
+
+3. For each trained arm, the embeddings at the index age.
+
+   ```bash
+   python -m pipeline.extract_embeddings server delphi whole_lives
+   ```
+
+4. Once every chosen arm has its embeddings: the Cox models and their scores,
+   for every arm at once, next to the baselines L1 and L2.
+
+   ```bash
+   Rscript pipeline/predict.R server
+   ```
+
 ## `split.R`
 
 Example run:
@@ -209,3 +248,79 @@ Writes, into the `runs` folder of the config, a folder per model and variant
 (`runs/delphi_whole_lives_lightning/`): `settings.yaml`, `train.log`,
 `metrics.csv` and `curves.png` as `train_torch.py`, and Lightning's checkpoints
 `best.ckpt` and `last.ckpt`.
+
+## `extract_embeddings.py`
+
+Example runs:
+
+```bash
+# The best model of a run of train_torch.py
+python -m pipeline.extract_embeddings server delphi whole_lives
+# The best model of a run of train_lightning.py
+python -m pipeline.extract_embeddings server delphi whole_lives --lightning
+# Check that it runs, before any training: an untrained model, nothing written
+python -m pipeline.extract_embeddings server delphi whole_lives --dry-run
+```
+
+Embeds every person at the index age with a trained model, and writes the file
+of an arm in the format of the user's script 4, which `predict.R` reads.
+
+- What the model reads, for each person: their tokens before the index age, with
+  "no event" every 5 years from day 1, then "no event" at the index age itself,
+  as in the evaluation batches of training. Nothing from the index age on
+  reaches the embedding.
+- The embedding: the model's hidden state at that last token (the index age),
+  all 120 numbers, as they are (no reduction).
+- The model: `best.pt` (or `best.ckpt` with `--lightning`) of the run's folder,
+  with the settings of its `settings.yaml`.
+- `--dry-run` embeds everyone with an untrained model, from the settings in
+  `configs/models/`, runs the checks, and writes nothing: no file that
+  `predict.R` could take for an arm.
+- Everyone gets an embedding (training, validation and test people), as the Cox
+  models of `predict.R` are fitted on the training people and scored on the test
+  people.
+
+Writes, into the data folder of the config (`root`):
+`age70_dataset_embeddings_<model>_<variant>.parquet` (`<model>_lightning` with
+`--lightning`), one row per person: the person columns of the strings file of
+script 3 (`PNR`, `SEX`, `BIRTH_COHORT`, `EDUCATION`, `EVENT_TYPE`,
+`FOLLOW_UP_END_AGE`, `DEMENTIA_BEFORE_INDEX`, ...), then `embedding_0` to
+`embedding_119` (float32), as script 4 writes them.
+
+## `predict.R`
+
+Example run:
+
+```bash
+Rscript pipeline/predict.R server
+```
+
+Fits and scores the transformer arms as `5 predictions.R` fits and scores its
+arms, with its code: two penalised cause-specific Cox models (dementia, and
+death without dementia as the competing event), and the risk of dementia by age
+85 (primary) and 95 (secondary) on the test people of `split.R`.
+
+- The arms: every file of `extract_embeddings.py` in the data folder, and the
+  baselines L1 (sex, birth year) and L2 (+ education) of `5 predictions.R`.
+- The predictors: sex, birth year and education, unpenalised, and the 120
+  embedding columns, penalised (ridge, elastic net or lasso, the best of the
+  three by cross-validation on the folds of `split.R`).
+- The scores: Brier score, IPA and AUC by each horizon, among the cohorts that
+  can be followed to it; the paired difference of each transformer arm with L2
+  (as P2 of `5 predictions.R`); the calibration by tenth of predicted risk,
+  suppressed for hjemtagelse.
+- Left out from `5 predictions.R`: the memory guard, and the Jina and income
+  arms. Each arm is still fitted in its own R process, two at a time.
+- One change to its scoring code: among people without dementia, the observed
+  risk is 0 (prodlim cannot estimate it otherwise). It only happens in small
+  groups, as on the synthetic data.
+
+Writes:
+
+```
+<root>/transformer_arm_results/   age70_<arm>.rds and .log, an arm each (not for
+                                  hjemtagelse: the predictions of every person)
+<root>/../Results/                age70_transformer_arm_performance.csv,
+                                  _arm_contrasts.csv, _tuning_settings.csv,
+                                  _calibration_by_risk_tenth.csv
+```
