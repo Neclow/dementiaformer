@@ -230,3 +230,7 @@ notes/
 # Data
 data/**
 !data/README.md
+!data/labels.csv
+
+# Img
+img/

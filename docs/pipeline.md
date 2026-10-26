@@ -118,9 +118,9 @@ thing changes:
   least 5 training people have. A rarer code takes its chapter's token, or
   `UNKNOWN_CODE` outside every chapter.
 - Delphi's vocabulary: `labels.csv` of github.com/gerstung-lab/Delphi at commit
-  fb72166 (`data/ukb_real_data/labels.csv`), in `p1_transformers/Delphi/`
-  (`delphi_labels` in the config). On the server, copy it there. Its 1,255 codes
-  are all in ICD-10 chapters A to Q, so codes of chapters R to Z are dropped.
+  fb72166 (`data/ukb_real_data/labels.csv`), in `data/labels.csv` of this
+  repository (`DELPHI_LABELS` in `src/_config.py`). Its 1,255 codes are all in
+  ICD-10 chapters A to Q, so codes of chapters R to Z are dropped.
 - Every variant writes ours: `events.parquet` and `vocab.csv`, where 0 is
   padding and 1 no event. With Delphi's vocabulary, a token's number is its line
   in `labels.csv` minus 1 (Female 2, Death 1269), as in Delphi's batches.

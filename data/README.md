@@ -1,9 +1,12 @@
 # Data
 
-Not in git, apart from this README. Laid out as on the user's server (`E:/`), so
-that `configs/data/synthetic.yaml` and `configs/data/server.yaml` differ only in
-their `root`.
+Not in git, apart from this README and `labels.csv`. Laid out as on the user's
+server (`E:/`), so that `configs/data/synthetic.yaml` and
+`configs/data/server.yaml` differ only in their `root`.
 
+- `labels.csv`: Delphi's vocabulary, `labels.csv` of
+  github.com/gerstung-lab/Delphi at commit fb72166
+  (`data/ukb_real_data/labels.csv`).
 - `raw/`: an inbox for new data from the user. Files are moved from here to
   where they live on the server.
 - `rawdata/709816/`: the user's raw registers. Empty here: the synthetic data

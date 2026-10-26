@@ -4,7 +4,7 @@ from argparse import ArgumentParser, Namespace
 
 import polars as pl
 
-from src._config import VARIANTS
+from src._config import DELPHI_LABELS, VARIANTS
 from src.settings import read_data_settings
 from src.timelines import make_persons, make_timelines
 from src.tokens import (
@@ -77,7 +77,7 @@ def main() -> None:
 
     # Every variant: the five steps, with the choices of its row in VARIANTS
     # One row per line of Delphi's labels.csv: NAME, TOKEN
-    labels = read_delphi_labels(paths["delphi_labels"])
+    labels = read_delphi_labels(DELPHI_LABELS)
     for variant, choices in VARIANTS.items():
         # One row per event of the variant: PNR, AGE_DAYS, KIND, EVENT
         events = select_events(timelines, choices["events"])
