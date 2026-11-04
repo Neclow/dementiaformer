@@ -71,5 +71,6 @@ def embed(
                 tokens[start : start + batch_size].to(device),
                 ages[start : start + batch_size].to(device),
             )
-            parts.append(hidden[:, -1].float().cpu())
+            # A copy, so the batch's full hidden states can be freed
+            parts.append(hidden[:, -1].float().cpu().clone())
     return torch.cat(parts).numpy()
