@@ -1,7 +1,7 @@
 # Settings of Delphi v2 with a MOTOR head (src/models/delphi_v2_motorhead.py)
 # and of its training: the size of Delphi-2M, trained as Delphi trains it
 # (config/train_delphi.py and train.py of github.com/gerstung-lab/Delphi at
-# commit fb72166)
+# commit fb72166), but with Delphi v2's longer context
 
 model:
   n_layer: 12
@@ -15,9 +15,11 @@ model:
   bin_boundaries: [1, 2, 5, 10, 15, 25]
 
 training:
-  # People per batch, and tokens per person
+  # People per batch, and tokens per person: twice Delphi's 96, as Delphi v2, so
+  # that longer records fit whole with their "no event" tokens (with 96, they
+  # lose their earliest tokens, sex included)
   batch_size: 128
-  block_size: 96
+  block_size: 192
   # Learning rate: warmed up over warmup_steps, then lowered along a cosine to
   # min_learning_rate at max_steps, the last step
   learning_rate: 6.0e-4

@@ -66,7 +66,8 @@ Delphi's head on a modern backbone.
 
 ## Delphi v2 with a MOTOR head (`delphi_v2_motorhead.py`)
 
-Delphi v2's backbone with the head of MOTOR (Steinberg et al., ICLR 2024).
+Delphi v2's backbone, and its context of 192 tokens, with the head of MOTOR
+(Steinberg et al., ICLR 2024).
 
 - Output: after each token, the log hazard of every token in each time bin.
   Unlike Delphi's single rate until the next event, the hazard can change over
@@ -77,7 +78,8 @@ Delphi v2's backbone with the head of MOTOR (Steinberg et al., ICLR 2024).
   is multiplied with the token embeddings. This adds 7 × 120² parameters.
 - Memory: the output has a value per person, token, bin and vocabulary token:
   about 450 MB in float32 for a batch of 128 people, 96 tokens and 1,300 tokens
-  in the vocabulary. If that is too much, the batch gets smaller (step 7
+  in the vocabulary, and twice that for a full batch of 192 tokens, which only
+  the longest records make. If that is too much, the batch gets smaller (step 7
   measures it).
 - Its loss is `motor_loss` (see Losses).
 
@@ -128,8 +130,9 @@ with.
   people of one split. People are numbered in PNR order, as in Delphi's `.bin`
   files.
 - Each person's window: their first `block_size` + 1 tokens (the context, 96 as
-  in Delphi or 192 for Delphi v2, plus one for the last target). When the "no
-  event" tokens make it longer, its earliest tokens are dropped, as in Delphi.
+  in Delphi or 192 for both Delphi v2 models, plus one for the last target).
+  When the "no event" tokens make it longer, its earliest tokens are dropped, as
+  in Delphi.
 - "No event" tokens: in training, 20 at random days within 100 years; in
   evaluation, every 5 years from day 1. None after the person's last token in
   the window.

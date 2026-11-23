@@ -96,10 +96,10 @@ case) and the trend from 4 to 16 threads (4 times the threads made a step 2.2 to
 
 At worst (full batches, the slower of the two runs here), with the evaluations.
 
-Delphi v2 trains with a context of 192 tokens, not the 96 timed here. Batches
-are trimmed to their longest person, so when most records fit in 96, its
-training stays about as fast. Its embeddings, on full windows of 192, take about
-twice as long.
+Both Delphi v2 models train with a context of 192 tokens, not the 96 timed here.
+Batches are trimmed to their longest person, so when most records fit in 96,
+their training stays about as fast. Their embeddings, on full windows of 192,
+take about twice as long.
 
 ## Measured once: the dry run and the overfit task
 

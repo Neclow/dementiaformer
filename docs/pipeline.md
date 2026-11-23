@@ -180,10 +180,10 @@ settings file in `configs/models/` (`delphi.yaml` and so on) holds its size and
 its training settings.
 
 - Training settings: Delphi's, for Delphi-2M (`config/train_delphi.py`): batches
-  of 128 people with up to 96 tokens each (192 for `delphi_v2`, see
-  `docs/model.md`); AdamW with a learning rate warmed up over 1,000 steps, then
-  lowered along a cosine to a tenth at step 150,000; weight decay 0.2 on the
-  weights of linear layers only; gradients clipped at 1.
+  of 128 people with up to 96 tokens each (192 for `delphi_v2` and
+  `delphi_v2_motorhead`, see `docs/model.md`); AdamW with a learning rate warmed
+  up over 1,000 steps, then lowered along a cosine to a tenth at step 150,000;
+  weight decay 0.2 on the weights of linear layers only; gradients clipped at 1.
 - Each step draws random training people, with replacement, as Delphi does:
   there are no epochs.
 - Every 250 steps and at the last step, the loss on 25 batches of training
