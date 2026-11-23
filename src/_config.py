@@ -89,7 +89,42 @@ DEMENTIA_CODE_PREFIXES: Final = [
 EVENT_KINDS: Final = {
     "delphi": ["diagnosis", "dementia_code", "sex", "death"],
     "ours": ["diagnosis", "dementia", "death", "abroad"],
+    # Ours, with sex, the other covariates of the Cox models and the risk
+    # factors of the tabular data as tokens
+    "kitchen_sink": [
+        "diagnosis",
+        "dementia",
+        "death",
+        "abroad",
+        "sex",
+        "covariate",
+        "risk",
+    ],
 }
+# The risk factors of the tabular data of the user's script 3 (the Lancet
+# Commission's), each with its three-character ICD-10 codes: RISK_<name>
+RISK_FACTOR_CODES: Final = {
+    "HYPERTENSION": ["I10", "I11", "I12", "I13", "I15"],
+    "DIABETES": ["E10", "E11", "E12", "E13", "E14"],
+    "DEPRESSION": ["F32", "F33"],
+    "TRAUMATIC_BRAIN_INJURY": ["S06"],
+    "HEARING_LOSS": ["H90", "H91"],
+    "ALCOHOL": ["F10", "K70"],
+    "HIGH_CHOLESTEROL": ["E78"],
+    "OBESITY": ["E66"],
+    "SMOKING": ["F17"],
+    "VISION_LOSS": ["H54"],
+}
+# The first characters of the covariate and risk-factor tokens of kitchen_sink:
+# input only, as sex
+COVARIATE_TOKEN_PREFIXES: Final = [
+    "BORN_",
+    "EDUCATION_",
+    "CHILDREN_ALIVE_",
+    "CHILD_BEREAVEMENT",
+    "SPOUSE_BEREAVEMENT",
+    "RISK_",
+]
 # The tokenisation variants: whose events, codes (Delphi's list or all) and
 # vocabulary each uses, and whether everyone's timeline stops before the index
 # date. The files are written in the format of the vocabulary
@@ -123,5 +158,11 @@ VARIANTS: Final[dict[str, dict[str, Any]]] = {
         "codes": "ours",
         "vocabulary": "ours",
         "cut_at_index": True,
+    },
+    "kitchen_sink": {
+        "events": "kitchen_sink",
+        "codes": "ours",
+        "vocabulary": "ours",
+        "cut_at_index": False,
     },
 }

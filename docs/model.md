@@ -107,7 +107,8 @@ A piecewise-exponential likelihood: after each token, the time to every task.
 
 - Tasks: every token but padding, "no event" and sex, and in Delphi's vocabulary
   its lifestyle tokens (BMI, smoking, alcohol), which never occur in the
-  registers. After each token, each task is:
+  registers, and in `kitchen_sink` the covariate and risk-factor tokens. After
+  each token, each task is:
   - an event, at its first age after that token's day;
   - censored at the end of the record (`OBSERVED_UNTIL_AGE_DAYS`), if it never
     happens;
@@ -135,7 +136,9 @@ with.
   in Delphi.
 - "No event" tokens: in training, 20 at random days within 100 years; in
   evaluation, every 5 years from day 1. None after the person's last token in
-  the window.
+  the window that is not input only, as Delphi takes the last age before it
+  moves its lifestyle tokens: in `kitchen_sink`, the covariates do not stretch
+  it.
 - Padding on the left, and each batch trimmed to its longest person. Targets are
   the next tokens.
 - For MOTOR's loss, each batch also has each person's first age of every token
@@ -144,9 +147,14 @@ with.
   once, they would take gigabytes on the server.
 - `left_out_tokens`: the tokens left out of the losses. With Delphi's
   vocabulary, its own list (padding, sex, lifestyle); with ours, `PAD`, `Female`
-  and `Male`. MOTOR's loss also leaves out `NO_EVENT`.
+  and `Male`, and the covariate and risk-factor tokens of `kitchen_sink` (by
+  their first characters, `COVARIATE_TOKEN_PREFIXES` in `src/_config.py`).
+  MOTOR's loss also leaves out `NO_EVENT`.
 - Dropped from Delphi's `get_batch`: the options Delphi does not train with, and
-  the lifestyle augmentation (no lifestyle data).
+  the lifestyle augmentation, which moves the lifestyle tokens by a random −20
+  to +40 years in training. `kitchen_sink`'s covariates keep their ages: most
+  have no real date to hide, and moving the risk factors earlier would give away
+  the codes the models learn to predict.
 - Random draws come from a generator seeded with the people's row numbers, as in
   Delphi: the same people give the same batch.
 - Checked: on the `delphi` tokens, 800 batches equal those of Delphi's

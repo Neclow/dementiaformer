@@ -14,6 +14,8 @@ paths:
   migration: age70_df_born1913_1947_migration.parquet
   tabular: age70_df_born1913_1947_tabular.parquet
   strings: age70_df_born1913_1947_strings.parquet
+  # The user's education records: one row per education, with its date
+  education: SEP/education_format.parquet
   # Made by split.R
   split: age70_split_and_folds.parquet
   # Made by build_tokens.py: a folder

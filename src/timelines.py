@@ -7,6 +7,7 @@ from src._config import (
     EARLIEST_REGISTER_DATE,
     MINIMUM_SPELL_DAYS,
     REGISTER_END,
+    RISK_FACTOR_CODES,
     VALIDATION_FOLD,
 )
 
@@ -25,7 +26,9 @@ def make_persons(
     per_person_raw: pl.DataFrame, split: pl.DataFrame, index_age: int
 ) -> pl.DataFrame:
     """One row per person: split, index date and observation window."""
-    # Columns selected: PNR, sex, dates of birth, death, emigration and dementia
+    # Columns selected: PNR, sex, dates of birth, death, emigration and dementia,
+    #   and the other covariates of the Cox models (birth year, education,
+    #   children alive at the index age, bereavements)
     # Create columns:
     #   - SPLIT: test outside the training set of split.R, validation in its
     #     fold VALIDATION_FOLD, train otherwise
@@ -45,6 +48,11 @@ def make_persons(
             "DEATH_DATE",
             "EMIGRATION_DATE",
             "DEMENTIA_INCIDENT_DATE",
+            "BIRTH_COHORT",
+            "EDU_CAT3",
+            "CHILDREN_ALIVE_AT_70",
+            "CHILD_BEREAVEMENT",
+            "SPOUSE_BEREAVEMENT",
         )
         .join(split.select("PNR", "in_training", "fold"), on="PNR")
         .with_columns(
@@ -224,21 +232,111 @@ def make_sex(persons: pl.DataFrame) -> pl.DataFrame:
     )
 
 
+def make_covariates(
+    per_education_raw: pl.DataFrame, persons: pl.DataFrame
+) -> pl.DataFrame:
+    """The other covariates of the Cox models as events, kept at any age as sex."""
+    # One row per covariate of a person, as an event of kind covariate:
+    #   - BORN_<birth year> at age 0
+    #   - EDUCATION_<level> (SHORT, MEDIUM, LONG) at the first date of the
+    #     person's highest level in per_education_raw, at the latest the day
+    #     before the index date, so that test people keep it. A date before
+    #     birth cannot be true: it is left out, and without another date the
+    #     level is undated
+    #   - the day before the index date: EDUCATION_UNKNOWN without a level, an
+    #     undated level, CHILDREN_ALIVE_<number> (0, 1, 2, 3+),
+    #     CHILD_BEREAVEMENT and SPOUSE_BEREAVEMENT if the person had one
+    before_index = (pl.col("INDEX_AGE_DAYS") - 1).cast(pl.Int32)
+    education_dates = (
+        per_education_raw.join(persons.select("PNR", "BIRTH_DATE"), on="PNR")
+        .filter(pl.col("EDU_DATE") >= pl.col("BIRTH_DATE"))
+        .group_by("PNR", "EDU_CAT3")
+        .agg(pl.col("EDU_DATE").min())
+    )
+    education = persons.join(education_dates, on=["PNR", "EDU_CAT3"], how="left")
+
+    def event(rows: pl.DataFrame, age: pl.Expr, name: pl.Expr) -> pl.DataFrame:
+        """One event per row: PNR, AGE_DAYS, KIND, EVENT."""
+        return rows.select("PNR", AGE_DAYS=age, KIND=pl.lit("covariate"), EVENT=name)
+
+    return pl.concat(
+        [
+            event(
+                persons.filter(pl.col("BIRTH_COHORT").is_not_null()),
+                pl.lit(0, pl.Int32),
+                pl.format("BORN_{}", pl.col("BIRTH_COHORT").cast(pl.Int32)),
+            ),
+            event(
+                education,
+                pl.when(pl.col("EDU_CAT3").is_null())
+                .then(before_index)
+                .otherwise(
+                    pl.min_horizontal(
+                        pl.coalesce(age_days("EDU_DATE"), before_index), before_index
+                    )
+                ),
+                pl.lit("EDUCATION_")
+                + pl.col("EDU_CAT3").fill_null("unknown").str.to_uppercase(),
+            ),
+            event(
+                persons.filter(pl.col("CHILDREN_ALIVE_AT_70").is_not_null()),
+                before_index,
+                pl.lit("CHILDREN_ALIVE_") + pl.col("CHILDREN_ALIVE_AT_70"),
+            ),
+            event(
+                persons.filter(pl.col("CHILD_BEREAVEMENT") == 1),
+                before_index,
+                pl.lit("CHILD_BEREAVEMENT"),
+            ),
+            event(
+                persons.filter(pl.col("SPOUSE_BEREAVEMENT") == 1),
+                before_index,
+                pl.lit("SPOUSE_BEREAVEMENT"),
+            ),
+        ]
+    )
+
+
+def make_risks(diagnoses: pl.DataFrame) -> pl.DataFrame:
+    """The risk factors of the tabular data, at the first contact with one of their codes."""
+    # One row per code of a risk factor: CODE, RISK (RISK_<name>)
+    codes = pl.DataFrame(
+        [
+            (code, f"RISK_{name}")
+            for name, factor_codes in RISK_FACTOR_CODES.items()
+            for code in factor_codes
+        ],
+        schema={"CODE": pl.String, "RISK": pl.String},
+        orient="row",
+    )
+    return (
+        diagnoses.filter(pl.col("KIND") == "diagnosis")
+        .join(codes, left_on="EVENT", right_on="CODE")
+        .group_by("PNR", "RISK")
+        .agg(pl.col("AGE_DAYS").min())
+        .select("PNR", "AGE_DAYS", KIND=pl.lit("risk"), EVENT="RISK")
+    )
+
+
 def make_timelines(
     per_diagnosis_raw: pl.DataFrame,
     per_crossing_raw: pl.DataFrame,
+    per_education_raw: pl.DataFrame,
     persons: pl.DataFrame,
 ) -> pl.DataFrame:
-    """One row per event: diagnoses, dementia, death, periods abroad and sex."""
+    """One row per event: diagnoses, dementia, death, periods abroad, sex, covariates and risk factors."""
     # Filter: test people's events before the index date only, so that their
     #   outcome never reaches the models
     # One row per event, everyone's whole record: PNR, AGE_DAYS, KIND, EVENT
+    diagnoses = make_diagnoses(per_diagnosis_raw, persons)
     events = pl.concat(
         [
-            make_diagnoses(per_diagnosis_raw, persons),
+            diagnoses,
             make_outcomes(persons),
             make_abroad(per_crossing_raw, persons),
             make_sex(persons),
+            make_covariates(per_education_raw, persons),
+            make_risks(diagnoses),
         ]
     )
     return (

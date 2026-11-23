@@ -51,6 +51,7 @@ Run every command from the root of this repository.
    | `delphi_all_codes`  | Delphi's, codes of every ICD-10 chapter                                         | ours                                            |
    | `whole_lives`       | ours: diagnoses without dementia codes, dementia, death, periods abroad, no sex | ours                                            |
    | `cut_at_index`      | ours, every timeline stopped before the index age                               | ours                                            |
+   | `kitchen_sink`      | ours, with sex, the other covariates and the risk factors as tokens             | ours                                            |
 
    A dry run first (a minute at most, nothing written), then the training, which
    takes hours or days. Its folder in `runs/` has `train.log` and `curves.png`
