@@ -303,8 +303,8 @@ def test_our_events_whole_lives_or_cut_at_index(cut: bool):
     events = select_events(timelines, "ours")
     if cut:
         events = cut_at_index(events, persons)
-    # Sex at age 0 is kept; the dementia code F00 never is
-    expected = {("Female", BIRTH), ("I10", date(1990, 1, 1))}
+    # No sex token; the dementia code F00 is never kept
+    expected = {("I10", date(1990, 1, 1))}
     if not cut:
         expected |= {
             ("E11", date(2005, 1, 1)),

@@ -44,13 +44,13 @@ Run every command from the root of this repository.
    | `delphi_v2`           | modern           | Delphi's                                   |
    | `delphi_v2_motorhead` | modern           | MOTOR's: one hazard per token and time bin |
 
-   | Variant             | Events                                                                       | Vocabulary                                      |
-   | ------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- |
-   | `delphi`            | Delphi's: diagnoses with dementia codes, sex, death; codes of Delphi's list  | Delphi's: every code its own token              |
-   | `delphi_min_people` | Delphi's                                                                     | ours: codes of 5+ training people, else chapter |
-   | `delphi_all_codes`  | Delphi's, codes of every ICD-10 chapter                                      | ours                                            |
-   | `whole_lives`       | ours: diagnoses without dementia codes, dementia, death, periods abroad, sex | ours                                            |
-   | `cut_at_index`      | ours, every timeline stopped before the index age                            | ours                                            |
+   | Variant             | Events                                                                          | Vocabulary                                      |
+   | ------------------- | ------------------------------------------------------------------------------- | ----------------------------------------------- |
+   | `delphi`            | Delphi's: diagnoses with dementia codes, sex, death; codes of Delphi's list     | Delphi's: every code its own token              |
+   | `delphi_min_people` | Delphi's                                                                        | ours: codes of 5+ training people, else chapter |
+   | `delphi_all_codes`  | Delphi's, codes of every ICD-10 chapter                                         | ours                                            |
+   | `whole_lives`       | ours: diagnoses without dementia codes, dementia, death, periods abroad, no sex | ours                                            |
+   | `cut_at_index`      | ours, every timeline stopped before the index age                               | ours                                            |
 
    A dry run first (a minute at most, nothing written), then the training, which
    takes hours or days. Its folder in `runs/` has `train.log` and `curves.png`

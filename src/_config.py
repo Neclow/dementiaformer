@@ -84,10 +84,11 @@ DEMENTIA_CODE_PREFIXES: Final = [
 ]
 # The kinds of timeline events: Delphi's (diagnoses with dementia codes, sex,
 # death) or ours (diagnoses without dementia codes, since DEMENTIA marks
-# dementia; DEMENTIA, death, periods abroad, sex)
+# dementia; DEMENTIA, death, periods abroad). Ours have no sex, as the text arms:
+# every arm gets sex as a covariate of the Cox models only
 EVENT_KINDS: Final = {
     "delphi": ["diagnosis", "dementia_code", "sex", "death"],
-    "ours": ["diagnosis", "dementia", "death", "abroad", "sex"],
+    "ours": ["diagnosis", "dementia", "death", "abroad"],
 }
 # The tokenisation variants: whose events, codes (Delphi's list or all) and
 # vocabulary each uses, and whether everyone's timeline stops before the index

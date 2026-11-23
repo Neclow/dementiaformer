@@ -94,7 +94,9 @@ gives each one a token number.
     and `DEATH`.
   - `ABROAD_START` and `ABROAD_END` of each period of at least 180 days abroad
     before the index age, as in the user's script 3.
-  - sex at age 0, as in Delphi.
+  - sex at age 0, as in Delphi, for Delphi's events only. Our events have no
+    sex, as the text arms: every arm gets sex as a covariate of the Cox models
+    only.
 - Window: from 1969-01-01 (start of the Psychiatric Central Research Register,
   as in the user's script 3) or birth if later, to death, emigration or
   2022-12-31.
@@ -104,19 +106,20 @@ gives each one a token number.
 Variants (one folder each, all built in one run). From one to the next, one
 thing changes:
 
-| Variant             | Events                                                                           | Vocabulary                                              | Change from the previous one |
-| ------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------- |
-| `delphi`            | Delphi's: diagnoses with dementia codes, sex, death; codes of Delphi's list only | Delphi's `labels.csv`: every code its own token         | –                            |
-| `delphi_min_people` | Delphi's; codes of Delphi's list only                                            | ours: codes in at least 5 training people, else chapter | the rare-code threshold      |
-| `delphi_all_codes`  | Delphi's, codes of every chapter                                                 | ours                                                    | chapter coverage             |
-| `whole_lives`       | ours: diagnoses without dementia codes, `DEMENTIA`, `DEATH`, periods abroad, sex | ours                                                    | the events                   |
-| `cut_at_index`      | ours, but everyone's timeline stops before the index date                        | ours                                                    | what happens after 70        |
+| Variant             | Events                                                                              | Vocabulary                                              | Change from the previous one |
+| ------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------- |
+| `delphi`            | Delphi's: diagnoses with dementia codes, sex, death; codes of Delphi's list only    | Delphi's `labels.csv`: every code its own token         | –                            |
+| `delphi_min_people` | Delphi's; codes of Delphi's list only                                               | ours: codes in at least 5 training people, else chapter | the rare-code threshold      |
+| `delphi_all_codes`  | Delphi's, codes of every chapter                                                    | ours                                                    | chapter coverage             |
+| `whole_lives`       | ours: diagnoses without dementia codes, `DEMENTIA`, `DEATH`, periods abroad, no sex | ours                                                    | the events                   |
+| `cut_at_index`      | ours, but everyone's timeline stops before the index date                           | ours                                                    | what happens after 70        |
 
 - Our vocabulary: `PAD` (0), `NO_EVENT` (1), `DEATH`, `DEMENTIA`,
   `ABROAD_START`, `ABROAD_END`, `UNKNOWN_CODE`, `Female`, `Male`, one
   `RARE_<chapter>` per ICD-10 chapter, then every three-character code that at
   least 5 training people have. A rarer code takes its chapter's token, or
-  `UNKNOWN_CODE` outside every chapter.
+  `UNKNOWN_CODE` outside every chapter. `Female` and `Male` only occur with
+  Delphi's events.
 - Delphi's vocabulary: `labels.csv` of github.com/gerstung-lab/Delphi at commit
   fb72166 (`data/ukb_real_data/labels.csv`), in `data/labels.csv` of this
   repository (`DELPHI_LABELS` in `src/_config.py`). Its 1,255 codes are all in
@@ -134,7 +137,7 @@ stops before 70 in every variant, as in `cut_at_index`.
 
 | Age  | Event in the timeline          | `delphi`             | `delphi_min_people`  | `delphi_all_codes`   | `whole_lives`        | `cut_at_index`      |
 | ---- | ------------------------------ | -------------------- | -------------------- | -------------------- | -------------------- | ------------------- |
-| 0    | sex: female                    | `Female`             | `Female`             | `Female`             | `Female`             | `Female`            |
+| 0    | sex: female                    | `Female`             | `Female`             | `Female`             | –                    | –                   |
 | 45.0 | leaves Denmark                 | –                    | –                    | –                    | `ABROAD_START`       | `ABROAD_START`      |
 | 50.0 | comes back                     | –                    | –                    | –                    | `ABROAD_END`         | `ABROAD_END`        |
 | 55.2 | I10.9, hypertension            | `I10`                | `I10`                | `I10`                | `I10`                | `I10`               |
