@@ -58,6 +58,11 @@ Delphi's head on a modern backbone.
   Delphi's age encoding.
 - Delphi's encoding of the age itself stays at the input: dementia risk depends
   on age, and RoPE alone only sees differences in age.
+- A context of 192 tokens, twice Delphi's, so that longer records fit whole with
+  their "no event" tokens. With Delphi's 96, records of more than about 80
+  tokens lose their earliest tokens, sex included. When most records are short,
+  training is barely slower, since batches are trimmed to their longest person;
+  the embeddings, on full windows, take about twice as long.
 
 ## Delphi v2 with a MOTOR head (`delphi_v2_motorhead.py`)
 
@@ -122,8 +127,9 @@ with.
 - `read_timelines` reads a variant's `events.parquet` and `vocab.csv`, for the
   people of one split. People are numbered in PNR order, as in Delphi's `.bin`
   files.
-- Each person's window: their first 97 tokens (the context of 96, plus one for
-  the last target).
+- Each person's window: their first `block_size` + 1 tokens (the context, 96 as
+  in Delphi or 192 for Delphi v2, plus one for the last target). When the "no
+  event" tokens make it longer, its earliest tokens are dropped, as in Delphi.
 - "No event" tokens: in training, 20 at random days within 100 years; in
   evaluation, every 5 years from day 1. None after the person's last token in
   the window.
