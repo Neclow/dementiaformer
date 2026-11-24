@@ -21,7 +21,10 @@ server (`E:/`), so that `configs/data/synthetic.yaml` and
   - outputs of the user's scripts 2 and 3:
     - `age70_df_born1913_1947.parquet`: one row per diagnosis at a hospital
       contact.
-    - `age70_df_born1913_1947_short.parquet`: one row per person.
+    - `age70_df_born1913_1947_short.parquet`: one row per person. Its
+      `CHILD_BEREAVEMENT_DATE` and `SPOUSE_BEREAVEMENT_DATE` are toy dates added
+      here, a random day from 20 to 70 for the bereaved: the synthetic data came
+      without them.
     - `age70_df_born1913_1947_migration.parquet`: one row per border crossing.
     - `age70_df_born1913_1947_strings.parquet`: one row per person and string
       variant.

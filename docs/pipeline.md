@@ -106,9 +106,13 @@ gives each one a token number.
       highest level in the education records (`SEP/education_format.parquet`),
       at the latest the day before the index date. A date before birth cannot be
       true: it is left out.
+    - `CHILD_BEREAVEMENT` and `SPOUSE_BEREAVEMENT`, for a person who had one, at
+      the date of the first loss (`CHILD_BEREAVEMENT_DATE` and
+      `SPOUSE_BEREAVEMENT_DATE` of the user's script 2), or the day before the
+      index date without a date. A date before birth cannot be true: it is left
+      out.
     - The day before the index date: `EDUCATION_UNKNOWN` without a level, a
-      level without a date, `CHILDREN_ALIVE_0`, `_1`, `_2` or `_3+`, and
-      `CHILD_BEREAVEMENT` and `SPOUSE_BEREAVEMENT` for a person who had one.
+      level without a date, and `CHILDREN_ALIVE_0`, `_1`, `_2` or `_3+`.
 - Window: from 1969-01-01 (start of the Psychiatric Central Research Register,
   as in the user's script 3) or birth if later, to death, emigration or
   2022-12-31.

@@ -36,6 +36,8 @@ def person(
     children: str = "2",
     child_bereavement: int = 0,
     spouse_bereavement: int = 0,
+    child_bereavement_date: date | None = None,
+    spouse_bereavement_date: date | None = None,
 ) -> dict[str, Any]:
     """One row of the person file, with its split: train, validation or test."""
     return {
@@ -50,6 +52,8 @@ def person(
         "CHILDREN_ALIVE_AT_70": children,
         "CHILD_BEREAVEMENT": child_bereavement,
         "SPOUSE_BEREAVEMENT": spouse_bereavement,
+        "CHILD_BEREAVEMENT_DATE": child_bereavement_date,
+        "SPOUSE_BEREAVEMENT_DATE": spouse_bereavement_date,
         "SPLIT": split,
     }
 
@@ -76,6 +80,8 @@ def run(
             "CHILDREN_ALIVE_AT_70": pl.String,
             "CHILD_BEREAVEMENT": pl.Int32,
             "SPOUSE_BEREAVEMENT": pl.Int32,
+            "CHILD_BEREAVEMENT_DATE": pl.Date,
+            "SPOUSE_BEREAVEMENT_DATE": pl.Date,
             "SPLIT": pl.String,
         },
     ).drop("SPLIT")
@@ -343,12 +349,19 @@ def test_our_events_whole_lives_or_cut_at_index(cut: bool):
     assert events_of(events, "P1") == expected
 
 
-def test_covariates_at_age_0_at_the_education_date_or_before_the_index_date():
+def test_covariates_at_age_0_at_their_date_or_before_the_index_date():
     people = [
-        person("P1", spouse_bereavement=1),
+        person("P1", spouse_bereavement=1, spouse_bereavement_date=date(1980, 1, 1)),
+        # A loss without a date: the day before the index date
         person("P2", education=None, children="0", child_bereavement=1),
         person("P3", "test", education="medium"),
-        person("P4", education="short"),
+        # A loss before birth cannot be true: the day before the index date
+        person(
+            "P4",
+            education="short",
+            child_bereavement=1,
+            child_bereavement_date=date(1920, 1, 1),
+        ),
     ]
     educations = [
         # P1's highest level is long: its first date, not one before birth
@@ -369,7 +382,7 @@ def test_covariates_at_age_0_at_the_education_date_or_before_the_index_date():
         ("BORN_1930", BIRTH),
         ("EDUCATION_LONG", date(1955, 1, 1)),
         ("CHILDREN_ALIVE_2", before_index),
-        ("SPOUSE_BEREAVEMENT", before_index),
+        ("SPOUSE_BEREAVEMENT", date(1980, 1, 1)),
     }
     assert events_of(covariates, "P2") == {
         ("BORN_1930", BIRTH),
@@ -383,6 +396,7 @@ def test_covariates_at_age_0_at_the_education_date_or_before_the_index_date():
         ("CHILDREN_ALIVE_2", before_index),
     }
     assert ("EDUCATION_SHORT", before_index) in events_of(covariates, "P4")
+    assert ("CHILD_BEREAVEMENT", before_index) in events_of(covariates, "P4")
 
 
 def test_kitchen_sink_is_whole_lives_with_input_only_covariates():

@@ -35,7 +35,8 @@ def main() -> None:
     print("Reading the data...", end=" ")
     # One row per person (script 2): PNR, SEX, BIRTH_DATE, DEATH_DATE,
     # EMIGRATION_DATE, DEMENTIA_INCIDENT_DATE, EVENT_TYPE, BIRTH_COHORT,
-    # EDU_CAT3, CHILDREN_ALIVE_AT_70, CHILD_BEREAVEMENT, SPOUSE_BEREAVEMENT, ...
+    # EDU_CAT3, CHILDREN_ALIVE_AT_70, CHILD_BEREAVEMENT, SPOUSE_BEREAVEMENT,
+    # CHILD_BEREAVEMENT_DATE, SPOUSE_BEREAVEMENT_DATE, ...
     per_person_raw = pl.read_parquet(paths["persons"])
     # One row per education record: PNR, EDU_DATE, EDU_CAT3 (short, medium, long)
     per_education_raw = pl.read_parquet(
