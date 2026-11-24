@@ -20,8 +20,8 @@ PADDING_AGE = -10000.0
 # Delphi's input-only tokens (ignore_tokens in its config/train_delphi.py):
 # padding, sex and lifestyle
 DELPHI_INPUT_ONLY = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-# Ours: padding and sex, and the covariate and risk-factor tokens of
-# kitchen_sink (COVARIATE_TOKEN_PREFIXES)
+# Ours: padding and sex, and the covariate tokens of kitchen_sink
+# (COVARIATE_TOKEN_PREFIXES)
 OUR_INPUT_ONLY = ["PAD", "Female", "Male"]
 
 

@@ -7,7 +7,6 @@ from src._config import (
     EARLIEST_REGISTER_DATE,
     MINIMUM_SPELL_DAYS,
     REGISTER_END,
-    RISK_FACTOR_CODES,
     VALIDATION_FOLD,
 )
 
@@ -297,46 +296,23 @@ def make_covariates(
     )
 
 
-def make_risks(diagnoses: pl.DataFrame) -> pl.DataFrame:
-    """The risk factors of the tabular data, at the first contact with one of their codes."""
-    # One row per code of a risk factor: CODE, RISK (RISK_<name>)
-    codes = pl.DataFrame(
-        [
-            (code, f"RISK_{name}")
-            for name, factor_codes in RISK_FACTOR_CODES.items()
-            for code in factor_codes
-        ],
-        schema={"CODE": pl.String, "RISK": pl.String},
-        orient="row",
-    )
-    return (
-        diagnoses.filter(pl.col("KIND") == "diagnosis")
-        .join(codes, left_on="EVENT", right_on="CODE")
-        .group_by("PNR", "RISK")
-        .agg(pl.col("AGE_DAYS").min())
-        .select("PNR", "AGE_DAYS", KIND=pl.lit("risk"), EVENT="RISK")
-    )
-
-
 def make_timelines(
     per_diagnosis_raw: pl.DataFrame,
     per_crossing_raw: pl.DataFrame,
     per_education_raw: pl.DataFrame,
     persons: pl.DataFrame,
 ) -> pl.DataFrame:
-    """One row per event: diagnoses, dementia, death, periods abroad, sex, covariates and risk factors."""
+    """One row per event: diagnoses, dementia, death, periods abroad, sex and covariates."""
     # Filter: test people's events before the index date only, so that their
     #   outcome never reaches the models
     # One row per event, everyone's whole record: PNR, AGE_DAYS, KIND, EVENT
-    diagnoses = make_diagnoses(per_diagnosis_raw, persons)
     events = pl.concat(
         [
-            diagnoses,
+            make_diagnoses(per_diagnosis_raw, persons),
             make_outcomes(persons),
             make_abroad(per_crossing_raw, persons),
             make_sex(persons),
             make_covariates(per_education_raw, persons),
-            make_risks(diagnoses),
         ]
     )
     return (

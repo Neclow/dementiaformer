@@ -108,9 +108,9 @@ def run(
 
 
 def events(timelines: pl.DataFrame, pnr: str, birth: date = BIRTH) -> set:
-    """One person's events as a set of (event, date), without sex, covariates and risk factors."""
+    """One person's events as a set of (event, date), without sex and covariates."""
     rows = timelines.filter(
-        pl.col("PNR") == pnr, ~pl.col("KIND").is_in(["sex", "covariate", "risk"])
+        pl.col("PNR") == pnr, ~pl.col("KIND").is_in(["sex", "covariate"])
     )
     return {
         (row["EVENT"], birth + timedelta(days=row["AGE_DAYS"]))
@@ -385,23 +385,6 @@ def test_covariates_at_age_0_at_the_education_date_or_before_the_index_date():
     assert ("EDUCATION_SHORT", before_index) in events_of(covariates, "P4")
 
 
-def test_risk_factors_at_the_first_contact_with_one_of_their_codes():
-    people = [person("P1", death=date(2010, 1, 1))]
-    contacts = [
-        ("P1", date(1990, 1, 1), "I119"),
-        ("P1", date(1985, 1, 1), "I109"),
-        ("P1", date(1995, 1, 1), "F172"),
-        # Not a risk factor
-        ("P1", date(1996, 1, 1), "R51"),
-    ]
-    _, timelines = run(people, contacts)
-    risks = timelines.filter(pl.col("KIND") == "risk")
-    assert events_of(risks, "P1") == {
-        ("RISK_HYPERTENSION", date(1985, 1, 1)),
-        ("RISK_SMOKING", date(1995, 1, 1)),
-    }
-
-
 def test_kitchen_sink_is_whole_lives_with_input_only_covariates():
     people = [person("P1", death=date(2010, 1, 1))]
     contacts = [("P1", date(1990, 1, 1), "I10")]
@@ -410,7 +393,6 @@ def test_kitchen_sink_is_whole_lives_with_input_only_covariates():
     whole_lives = set(select_events(timelines, "ours").rows())
     kitchen_sink = select_events(timelines, "kitchen_sink")
     covariates = ["Female", "BORN_1930", "EDUCATION_LONG", "CHILDREN_ALIVE_2"]
-    covariates += ["RISK_HYPERTENSION"]
     # Every event of whole_lives, and the covariates
     assert whole_lives <= set(kitchen_sink.rows())
     added = {row[3] for row in set(kitchen_sink.rows()) - whole_lives}

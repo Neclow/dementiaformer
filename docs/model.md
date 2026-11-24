@@ -107,8 +107,8 @@ A piecewise-exponential likelihood: after each token, the time to every task.
 
 - Tasks: every token but padding, "no event" and sex, and in Delphi's vocabulary
   its lifestyle tokens (BMI, smoking, alcohol), which never occur in the
-  registers, and in `kitchen_sink` the covariate and risk-factor tokens. After
-  each token, each task is:
+  registers, and in `kitchen_sink` the covariate tokens. After each token, each
+  task is:
   - an event, at its first age after that token's day;
   - censored at the end of the record (`OBSERVED_UNTIL_AGE_DAYS`), if it never
     happens;
@@ -147,14 +147,13 @@ with.
   once, they would take gigabytes on the server.
 - `left_out_tokens`: the tokens left out of the losses. With Delphi's
   vocabulary, its own list (padding, sex, lifestyle); with ours, `PAD`, `Female`
-  and `Male`, and the covariate and risk-factor tokens of `kitchen_sink` (by
-  their first characters, `COVARIATE_TOKEN_PREFIXES` in `src/_config.py`).
-  MOTOR's loss also leaves out `NO_EVENT`.
+  and `Male`, and the covariate tokens of `kitchen_sink` (by their first
+  characters, `COVARIATE_TOKEN_PREFIXES` in `src/_config.py`). MOTOR's loss also
+  leaves out `NO_EVENT`.
 - Dropped from Delphi's `get_batch`: the options Delphi does not train with, and
   the lifestyle augmentation, which moves the lifestyle tokens by a random −20
   to +40 years in training. `kitchen_sink`'s covariates keep their ages: most
-  have no real date to hide, and moving the risk factors earlier would give away
-  the codes the models learn to predict.
+  have no real date to hide.
 - Random draws come from a generator seeded with the people's row numbers, as in
   Delphi: the same people give the same batch.
 - Checked: on the `delphi` tokens, 800 batches equal those of Delphi's

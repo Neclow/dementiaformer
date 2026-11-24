@@ -97,9 +97,10 @@ gives each one a token number.
   - sex at age 0, as in Delphi, for Delphi's events only. Our events have no
     sex, as the text arms: every arm gets sex as a covariate of the Cox models
     only.
-  - For `kitchen_sink` only, the other covariates of the Cox models and the risk
-    factors of the tabular data, as tokens left out of the losses (as sex), kept
-    at any age (as sex):
+  - For `kitchen_sink` only, sex and the other covariates of the Cox models, as
+    tokens left out of the losses (as sex), kept at any age (as sex). Not the
+    risk factors of the tabular data: they are groups of codes, which the
+    diagnoses already hold.
     - `BORN_<birth year>` at age 0.
     - `EDUCATION_SHORT`, `_MEDIUM` or `_LONG` at the first date of the person's
       highest level in the education records (`SEP/education_format.parquet`),
@@ -108,10 +109,6 @@ gives each one a token number.
     - The day before the index date: `EDUCATION_UNKNOWN` without a level, a
       level without a date, `CHILDREN_ALIVE_0`, `_1`, `_2` or `_3+`, and
       `CHILD_BEREAVEMENT` and `SPOUSE_BEREAVEMENT` for a person who had one.
-    - `RISK_<factor>` at the first contact with one of the factor's codes, as
-      the tabular data defines them (the Lancet Commission's:
-      `RISK_FACTOR_CODES` in `src/_config.py`), never earlier: placed earlier,
-      they would give away the codes the models learn to predict.
 - Window: from 1969-01-01 (start of the Psychiatric Central Research Register,
   as in the user's script 3) or birth if later, to death, emigration or
   2022-12-31.
@@ -128,15 +125,14 @@ thing changes:
 | `delphi_all_codes`  | Delphi's, codes of every chapter                                                    | ours                                                    | chapter coverage                   |
 | `whole_lives`       | ours: diagnoses without dementia codes, `DEMENTIA`, `DEATH`, periods abroad, no sex | ours                                                    | the events                         |
 | `cut_at_index`      | ours, but everyone's timeline stops before the index date                           | ours                                                    | what happens after 70              |
-| `kitchen_sink`      | ours, with sex, the other covariates and the risk factors as tokens                 | ours                                                    | from `whole_lives`: the covariates |
+| `kitchen_sink`      | ours, with sex and the other covariates as tokens                                   | ours                                                    | from `whole_lives`: the covariates |
 
 - Our vocabulary: `PAD` (0), `NO_EVENT` (1), `DEATH`, `DEMENTIA`,
   `ABROAD_START`, `ABROAD_END`, `UNKNOWN_CODE`, `Female`, `Male`, one
-  `RARE_<chapter>` per ICD-10 chapter, the covariate and risk-factor tokens of
-  `kitchen_sink`, then every three-character code that at least 5 training
-  people have. A rarer code takes its chapter's token, or `UNKNOWN_CODE` outside
-  every chapter. `Female` and `Male` only occur with Delphi's events and in
-  `kitchen_sink`.
+  `RARE_<chapter>` per ICD-10 chapter, the covariate tokens of `kitchen_sink`,
+  then every three-character code that at least 5 training people have. A rarer
+  code takes its chapter's token, or `UNKNOWN_CODE` outside every chapter.
+  `Female` and `Male` only occur with Delphi's events and in `kitchen_sink`.
 - Delphi's vocabulary: `labels.csv` of github.com/gerstung-lab/Delphi at commit
   fb72166 (`data/ukb_real_data/labels.csv`), in `data/labels.csv` of this
   repository (`DELPHI_LABELS` in `src/_config.py`). Its 1,255 codes are all in
