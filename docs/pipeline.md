@@ -94,7 +94,25 @@ gives each one a token number.
     and `DEATH`.
   - `ABROAD_START` and `ABROAD_END` of each period of at least 180 days abroad
     before the index age, as in the user's script 3.
-  - sex at age 0, as in Delphi.
+  - sex at age 0, as in Delphi, for Delphi's events only. Our events have no
+    sex, as the text arms: every arm gets sex as a covariate of the Cox models
+    only.
+  - For `kitchen_sink` only, sex and the other covariates of the Cox models, as
+    tokens left out of the losses (as sex), kept at any age (as sex). Not the
+    risk factors of the tabular data: they are groups of codes, which the
+    diagnoses already hold.
+    - `BORN_<birth year>` at age 0.
+    - `EDUCATION_SHORT`, `_MEDIUM` or `_LONG` at the first date of the person's
+      highest level in the education records (`SEP/education_format.parquet`),
+      at the latest the day before the index date. A date before birth cannot be
+      true: it is left out.
+    - `CHILD_BEREAVEMENT` and `SPOUSE_BEREAVEMENT`, for a person who had one, at
+      the date of the first loss (`CHILD_BEREAVEMENT_DATE` and
+      `SPOUSE_BEREAVEMENT_DATE` of the user's script 2), or the day before the
+      index date without a date. A date before birth cannot be true: it is left
+      out.
+    - The day before the index date: `EDUCATION_UNKNOWN` without a level, a
+      level without a date, and `CHILDREN_ALIVE_0`, `_1`, `_2` or `_3+`.
 - Window: from 1969-01-01 (start of the Psychiatric Central Research Register,
   as in the user's script 3) or birth if later, to death, emigration or
   2022-12-31.
@@ -104,19 +122,21 @@ gives each one a token number.
 Variants (one folder each, all built in one run). From one to the next, one
 thing changes:
 
-| Variant             | Events                                                                           | Vocabulary                                              | Change from the previous one |
-| ------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------- |
-| `delphi`            | Delphi's: diagnoses with dementia codes, sex, death; codes of Delphi's list only | Delphi's `labels.csv`: every code its own token         | –                            |
-| `delphi_min_people` | Delphi's; codes of Delphi's list only                                            | ours: codes in at least 5 training people, else chapter | the rare-code threshold      |
-| `delphi_all_codes`  | Delphi's, codes of every chapter                                                 | ours                                                    | chapter coverage             |
-| `whole_lives`       | ours: diagnoses without dementia codes, `DEMENTIA`, `DEATH`, periods abroad, sex | ours                                                    | the events                   |
-| `cut_at_index`      | ours, but everyone's timeline stops before the index date                        | ours                                                    | what happens after 70        |
+| Variant             | Events                                                                              | Vocabulary                                              | Change from the previous one       |
+| ------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------- |
+| `delphi`            | Delphi's: diagnoses with dementia codes, sex, death; codes of Delphi's list only    | Delphi's `labels.csv`: every code its own token         | –                                  |
+| `delphi_min_people` | Delphi's; codes of Delphi's list only                                               | ours: codes in at least 5 training people, else chapter | the rare-code threshold            |
+| `delphi_all_codes`  | Delphi's, codes of every chapter                                                    | ours                                                    | chapter coverage                   |
+| `whole_lives`       | ours: diagnoses without dementia codes, `DEMENTIA`, `DEATH`, periods abroad, no sex | ours                                                    | the events                         |
+| `cut_at_index`      | ours, but everyone's timeline stops before the index date                           | ours                                                    | what happens after 70              |
+| `kitchen_sink`      | ours, with sex and the other covariates as tokens                                   | ours                                                    | from `whole_lives`: the covariates |
 
 - Our vocabulary: `PAD` (0), `NO_EVENT` (1), `DEATH`, `DEMENTIA`,
   `ABROAD_START`, `ABROAD_END`, `UNKNOWN_CODE`, `Female`, `Male`, one
-  `RARE_<chapter>` per ICD-10 chapter, then every three-character code that at
-  least 5 training people have. A rarer code takes its chapter's token, or
-  `UNKNOWN_CODE` outside every chapter.
+  `RARE_<chapter>` per ICD-10 chapter, the covariate tokens of `kitchen_sink`,
+  then every three-character code that at least 5 training people have. A rarer
+  code takes its chapter's token, or `UNKNOWN_CODE` outside every chapter.
+  `Female` and `Male` only occur with Delphi's events and in `kitchen_sink`.
 - Delphi's vocabulary: `labels.csv` of github.com/gerstung-lab/Delphi at commit
   fb72166 (`data/ukb_real_data/labels.csv`), in `data/labels.csv` of this
   repository (`DELPHI_LABELS` in `src/_config.py`). Its 1,255 codes are all in
@@ -134,7 +154,7 @@ stops before 70 in every variant, as in `cut_at_index`.
 
 | Age  | Event in the timeline          | `delphi`             | `delphi_min_people`  | `delphi_all_codes`   | `whole_lives`        | `cut_at_index`      |
 | ---- | ------------------------------ | -------------------- | -------------------- | -------------------- | -------------------- | ------------------- |
-| 0    | sex: female                    | `Female`             | `Female`             | `Female`             | `Female`             | `Female`            |
+| 0    | sex: female                    | `Female`             | `Female`             | `Female`             | –                    | –                   |
 | 45.0 | leaves Denmark                 | –                    | –                    | –                    | `ABROAD_START`       | `ABROAD_START`      |
 | 50.0 | comes back                     | –                    | –                    | –                    | `ABROAD_END`         | `ABROAD_END`        |
 | 55.2 | I10.9, hypertension            | `I10`                | `I10`                | `I10`                | `I10`                | `I10`               |
@@ -155,6 +175,7 @@ tokens/
   delphi_all_codes/    events.parquet, vocab.csv
   whole_lives/         events.parquet, vocab.csv
   cut_at_index/        events.parquet, vocab.csv
+  kitchen_sink/        events.parquet, vocab.csv
   delphi/              events.parquet, vocab.csv, and Delphi's format:
                        train.bin, val.bin, test.bin (uint32 rows of patient id,
                        age in days, token), patients.parquet (PATIENT_ID, PNR)
@@ -180,8 +201,9 @@ settings file in `configs/models/` (`delphi.yaml` and so on) holds its size and
 its training settings.
 
 - Training settings: Delphi's, for Delphi-2M (`config/train_delphi.py`): batches
-  of 128 people with up to 96 tokens each; AdamW with a learning rate warmed up
-  over 1,000 steps, then lowered along a cosine to a tenth at step 150,000;
+  of 128 people with up to 96 tokens each (192 for `delphi_v2` and
+  `delphi_v2_motorhead`, see `docs/model.md`); AdamW with a learning rate warmed
+  up over 1,000 steps, then lowered along a cosine to a tenth at step 150,000;
   weight decay 0.2 on the weights of linear layers only; gradients clipped at 1.
 - Each step draws random training people, with replacement, as Delphi does:
   there are no epochs.

@@ -69,10 +69,10 @@ def train(
     training = TrainingSettings(**settings["training"])
     torch.manual_seed(training.seed)
     log = make_logger(None if run is None else run / "train.log")
-    streams = batch_streams(folder, training)
-    people = streams["batches"].timelines
     vocabulary = pl.read_csv(folder / "vocab.csv")
     left_out = left_out_tokens(vocabulary, delphi_vocabulary)
+    streams = batch_streams(folder, training, left_out)
+    people = streams["batches"].timelines
     model = build_model(name, settings["model"], people.vocab_size).to(device)
     optimizer = make_optimizer(model, training)
 

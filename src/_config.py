@@ -84,11 +84,25 @@ DEMENTIA_CODE_PREFIXES: Final = [
 ]
 # The kinds of timeline events: Delphi's (diagnoses with dementia codes, sex,
 # death) or ours (diagnoses without dementia codes, since DEMENTIA marks
-# dementia; DEMENTIA, death, periods abroad, sex)
+# dementia; DEMENTIA, death, periods abroad). Ours have no sex, as the text arms:
+# every arm gets sex as a covariate of the Cox models only
 EVENT_KINDS: Final = {
     "delphi": ["diagnosis", "dementia_code", "sex", "death"],
-    "ours": ["diagnosis", "dementia", "death", "abroad", "sex"],
+    "ours": ["diagnosis", "dementia", "death", "abroad"],
+    # Ours, with sex and the other covariates of the Cox models as tokens. Not
+    # the risk factors of the tabular data: they are groups of codes, which the
+    # diagnoses already hold
+    "kitchen_sink": ["diagnosis", "dementia", "death", "abroad", "sex", "covariate"],
 }
+# The first characters of the covariate tokens of kitchen_sink: input only, as
+# sex
+COVARIATE_TOKEN_PREFIXES: Final = [
+    "BORN_",
+    "EDUCATION_",
+    "CHILDREN_ALIVE_",
+    "CHILD_BEREAVEMENT",
+    "SPOUSE_BEREAVEMENT",
+]
 # The tokenisation variants: whose events, codes (Delphi's list or all) and
 # vocabulary each uses, and whether everyone's timeline stops before the index
 # date. The files are written in the format of the vocabulary
@@ -122,5 +136,11 @@ VARIANTS: Final[dict[str, dict[str, Any]]] = {
         "codes": "ours",
         "vocabulary": "ours",
         "cut_at_index": True,
+    },
+    "kitchen_sink": {
+        "events": "kitchen_sink",
+        "codes": "ours",
+        "vocabulary": "ours",
+        "cut_at_index": False,
     },
 }

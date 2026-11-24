@@ -34,8 +34,14 @@ def main() -> None:
 
     print("Reading the data...", end=" ")
     # One row per person (script 2): PNR, SEX, BIRTH_DATE, DEATH_DATE,
-    # EMIGRATION_DATE, DEMENTIA_INCIDENT_DATE, EVENT_TYPE, ...
+    # EMIGRATION_DATE, DEMENTIA_INCIDENT_DATE, EVENT_TYPE, BIRTH_COHORT,
+    # EDU_CAT3, CHILDREN_ALIVE_AT_70, CHILD_BEREAVEMENT, SPOUSE_BEREAVEMENT,
+    # CHILD_BEREAVEMENT_DATE, SPOUSE_BEREAVEMENT_DATE, ...
     per_person_raw = pl.read_parquet(paths["persons"])
+    # One row per education record: PNR, EDU_DATE, EDU_CAT3 (short, medium, long)
+    per_education_raw = pl.read_parquet(
+        paths["education"], columns=["PNR", "EDU_DATE", "EDU_CAT3"]
+    )
     # One row per diagnosis at a hospital contact (script 2): PNR, INDATE, DIAG
     per_diagnosis_raw = pl.read_parquet(
         paths["contacts"], columns=["PNR", "INDATE", "DIAG"]
@@ -53,7 +59,9 @@ def main() -> None:
     # INDEX_AGE_DAYS, OBSERVED_UNTIL_AGE_DAYS
     persons = make_persons(per_person_raw, split, config["index_age"])
     # One row per event: PNR, AGE_DAYS, KIND, EVENT
-    timelines = make_timelines(per_diagnosis_raw, per_crossing_raw, persons)
+    timelines = make_timelines(
+        per_diagnosis_raw, per_crossing_raw, per_education_raw, persons
+    )
     print("Done")
 
     # Every person has a split, and no test person has an event from the index

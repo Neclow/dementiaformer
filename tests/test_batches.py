@@ -53,6 +53,21 @@ def test_no_event_tokens(tmp_path):
     assert int((tokens == NO_EVENT).sum()) == 7
 
 
+def test_no_event_tokens_end_at_the_last_token_that_is_not_input_only(tmp_path):
+    timelines = read_timelines(write_variant(tmp_path / "variant"), "train")
+    e = VOCABULARY.index("E")
+    # P1's last token is E, at 60; with E input only, the last one is D, at 50
+    for input_only, last in [((), 60), ((0, 3, 4, e), 50)]:
+        batch = get_batch(
+            timelines, np.array([0]), training=False, input_only=input_only
+        )
+        tokens = torch.cat([batch.tokens, batch.targets[:, -1:]], dim=1)
+        ages = torch.cat([batch.ages, batch.target_ages[:, -1:]], dim=1)
+        # "No event" every 5 years up to the last token, and E stays either way
+        assert (last - 5) * YEAR < ages[tokens == NO_EVENT].max() <= last * YEAR
+        assert e in tokens[0].tolist()
+
+
 def test_window_of_block_size_plus_one(tmp_path):
     timelines = read_timelines(write_variant(tmp_path / "variant"), "train")
     batch = get_batch(timelines, np.array([0]), block_size=3, training=False)

@@ -56,8 +56,13 @@ def make_vocabulary(
     # Ours. Create rows, in this order:
     #   - SPECIAL_TOKENS: PAD is 0, NO_EVENT is 1
     #   - RARE_<chapter>: one per ICD-10 chapter, for the rarer codes
+    #   - the covariate tokens of the events (kitchen_sink), in alphabetical
+    #     order
     #   - every code that at least MIN_PEOPLE_PER_CODE training people have,
     #     in alphabetical order (validation and test people are not counted)
+    covariates = (
+        events.filter(pl.col("KIND") == "covariate")["EVENT"].unique().sort().to_list()
+    )
     # The codes with their own token, in alphabetical order
     codes = (
         events.filter(pl.col("KIND") == "diagnosis")
@@ -69,7 +74,7 @@ def make_vocabulary(
         .to_list()
     )
     rare = [f"RARE_{name}" for _, _, name in ICD10_CHAPTERS]
-    names = [*SPECIAL_TOKENS, *rare, *codes]
+    names = [*SPECIAL_TOKENS, *rare, *covariates, *codes]
     return pl.DataFrame(
         {"TOKEN": range(len(names)), "NAME": names},
         schema={"TOKEN": pl.Int32, "NAME": pl.String},

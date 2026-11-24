@@ -50,7 +50,9 @@ class TrainingSettings:
     seed: int
 
 
-def batch_streams(folder: Path, settings: TrainingSettings) -> dict[str, RandomBatches]:
+def batch_streams(
+    folder: Path, settings: TrainingSettings, input_only: list[int]
+) -> dict[str, RandomBatches]:
     """A run's batches: "batches" to train on, and "train" and "validation" to evaluate on."""
     timelines = {
         split: read_timelines(folder, split) for split in ["train", "validation"]
@@ -65,6 +67,7 @@ def batch_streams(folder: Path, settings: TrainingSettings) -> dict[str, RandomB
             training,
             settings.no_event_years,
             settings.seed + seed_offset,
+            input_only,
         )
 
     return {

@@ -58,10 +58,16 @@ Delphi's head on a modern backbone.
   Delphi's age encoding.
 - Delphi's encoding of the age itself stays at the input: dementia risk depends
   on age, and RoPE alone only sees differences in age.
+- A context of 192 tokens, twice Delphi's, so that longer records fit whole with
+  their "no event" tokens. With Delphi's 96, records of more than about 80
+  tokens lose their earliest tokens, sex included. When most records are short,
+  training is barely slower, since batches are trimmed to their longest person;
+  the embeddings, on full windows, take about twice as long.
 
 ## Delphi v2 with a MOTOR head (`delphi_v2_motorhead.py`)
 
-Delphi v2's backbone with the head of MOTOR (Steinberg et al., ICLR 2024).
+Delphi v2's backbone, and its context of 192 tokens, with the head of MOTOR
+(Steinberg et al., ICLR 2024).
 
 - Output: after each token, the log hazard of every token in each time bin.
   Unlike Delphi's single rate until the next event, the hazard can change over
@@ -72,7 +78,8 @@ Delphi v2's backbone with the head of MOTOR (Steinberg et al., ICLR 2024).
   is multiplied with the token embeddings. This adds 7 × 120² parameters.
 - Memory: the output has a value per person, token, bin and vocabulary token:
   about 450 MB in float32 for a batch of 128 people, 96 tokens and 1,300 tokens
-  in the vocabulary. If that is too much, the batch gets smaller (step 7
+  in the vocabulary, and twice that for a full batch of 192 tokens, which only
+  the longest records make. If that is too much, the batch gets smaller (step 7
   measures it).
 - Its loss is `motor_loss` (see Losses).
 
@@ -100,7 +107,8 @@ A piecewise-exponential likelihood: after each token, the time to every task.
 
 - Tasks: every token but padding, "no event" and sex, and in Delphi's vocabulary
   its lifestyle tokens (BMI, smoking, alcohol), which never occur in the
-  registers. After each token, each task is:
+  registers, and in `kitchen_sink` the covariate tokens. After each token, each
+  task is:
   - an event, at its first age after that token's day;
   - censored at the end of the record (`OBSERVED_UNTIL_AGE_DAYS`), if it never
     happens;
@@ -122,11 +130,15 @@ with.
 - `read_timelines` reads a variant's `events.parquet` and `vocab.csv`, for the
   people of one split. People are numbered in PNR order, as in Delphi's `.bin`
   files.
-- Each person's window: their first 97 tokens (the context of 96, plus one for
-  the last target).
+- Each person's window: their first `block_size` + 1 tokens (the context, 96 as
+  in Delphi or 192 for both Delphi v2 models, plus one for the last target).
+  When the "no event" tokens make it longer, its earliest tokens are dropped, as
+  in Delphi.
 - "No event" tokens: in training, 20 at random days within 100 years; in
   evaluation, every 5 years from day 1. None after the person's last token in
-  the window.
+  the window that is not input only, as Delphi takes the last age before it
+  moves its lifestyle tokens: in `kitchen_sink`, the covariates do not stretch
+  it.
 - Padding on the left, and each batch trimmed to its longest person. Targets are
   the next tokens.
 - For MOTOR's loss, each batch also has each person's first age of every token
@@ -135,9 +147,13 @@ with.
   once, they would take gigabytes on the server.
 - `left_out_tokens`: the tokens left out of the losses. With Delphi's
   vocabulary, its own list (padding, sex, lifestyle); with ours, `PAD`, `Female`
-  and `Male`. MOTOR's loss also leaves out `NO_EVENT`.
+  and `Male`, and the covariate tokens of `kitchen_sink` (by their first
+  characters, `COVARIATE_TOKEN_PREFIXES` in `src/_config.py`). MOTOR's loss also
+  leaves out `NO_EVENT`.
 - Dropped from Delphi's `get_batch`: the options Delphi does not train with, and
-  the lifestyle augmentation (no lifestyle data).
+  the lifestyle augmentation, which moves the lifestyle tokens by a random −20
+  to +40 years in training. `kitchen_sink`'s covariates keep their ages: most
+  have no real date to hide.
 - Random draws come from a generator seeded with the people's row numbers, as in
   Delphi: the same people give the same batch.
 - Checked: on the `delphi` tokens, 800 batches equal those of Delphi's

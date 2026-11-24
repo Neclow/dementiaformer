@@ -18,6 +18,7 @@ from src.tokens import (
     tokenise,
     write,
 )
+from src.training.batches import left_out_tokens
 
 # Everyone's birth date unless a test says otherwise: index date 2000-06-01 at
 # 70, a year before it 1999-06-01
@@ -31,6 +32,12 @@ def person(
     death: date | None = None,
     emigration: date | None = None,
     dementia: date | None = None,
+    education: str | None = "long",
+    children: str = "2",
+    child_bereavement: int = 0,
+    spouse_bereavement: int = 0,
+    child_bereavement_date: date | None = None,
+    spouse_bereavement_date: date | None = None,
 ) -> dict[str, Any]:
     """One row of the person file, with its split: train, validation or test."""
     return {
@@ -40,6 +47,13 @@ def person(
         "DEATH_DATE": death,
         "EMIGRATION_DATE": emigration,
         "DEMENTIA_INCIDENT_DATE": dementia,
+        "BIRTH_COHORT": float(birth.year),
+        "EDU_CAT3": education,
+        "CHILDREN_ALIVE_AT_70": children,
+        "CHILD_BEREAVEMENT": child_bereavement,
+        "SPOUSE_BEREAVEMENT": spouse_bereavement,
+        "CHILD_BEREAVEMENT_DATE": child_bereavement_date,
+        "SPOUSE_BEREAVEMENT_DATE": spouse_bereavement_date,
         "SPLIT": split,
     }
 
@@ -48,6 +62,7 @@ def run(
     people: list[dict[str, Any]],
     contacts: list[tuple[str, date, str]] | None = None,
     crossings: list[tuple[str, date, str]] | None = None,
+    educations: list[tuple[str, date, str]] | None = None,
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
     """make_persons and make_timelines at index age 70 on these rows."""
     folds = {"train": 1, "validation": 5, "test": None}
@@ -60,6 +75,13 @@ def run(
             "DEATH_DATE": pl.Date,
             "EMIGRATION_DATE": pl.Date,
             "DEMENTIA_INCIDENT_DATE": pl.Date,
+            "BIRTH_COHORT": pl.Float64,
+            "EDU_CAT3": pl.String,
+            "CHILDREN_ALIVE_AT_70": pl.String,
+            "CHILD_BEREAVEMENT": pl.Int32,
+            "SPOUSE_BEREAVEMENT": pl.Int32,
+            "CHILD_BEREAVEMENT_DATE": pl.Date,
+            "SPOUSE_BEREAVEMENT_DATE": pl.Date,
             "SPLIT": pl.String,
         },
     ).drop("SPLIT")
@@ -80,13 +102,22 @@ def run(
         schema={"PNR": pl.String, "HAEND_DATO": pl.Date, "INDUD_KODE": pl.String},
         orient="row",
     )
+    per_education_raw = pl.DataFrame(
+        educations or [],
+        schema={"PNR": pl.String, "EDU_DATE": pl.Date, "EDU_CAT3": pl.String},
+        orient="row",
+    )
     persons = make_persons(per_person_raw, split, 70)
-    return persons, make_timelines(per_diagnosis_raw, per_crossing_raw, persons)
+    return persons, make_timelines(
+        per_diagnosis_raw, per_crossing_raw, per_education_raw, persons
+    )
 
 
 def events(timelines: pl.DataFrame, pnr: str, birth: date = BIRTH) -> set:
-    """One person's events as a set of (event, date), without sex."""
-    rows = timelines.filter(pl.col("PNR") == pnr, pl.col("KIND") != "sex")
+    """One person's events as a set of (event, date), without sex and covariates."""
+    rows = timelines.filter(
+        pl.col("PNR") == pnr, ~pl.col("KIND").is_in(["sex", "covariate"])
+    )
     return {
         (row["EVENT"], birth + timedelta(days=row["AGE_DAYS"]))
         for row in rows.iter_rows(named=True)
@@ -282,7 +313,11 @@ def test_dementia_codes_are_read_on_the_full_code():
     # F02.0 and G31.0B are dementia codes, F02.1 and G31.2 are not
     contacts = [("P1", day, code) for code in ["F020", "F021", "G310B", "G312"]]
     _, timelines = run([person("P1")], contacts)
-    kinds = timelines.filter(pl.col("KIND") != "sex").select("KIND", "EVENT").rows()
+    kinds = (
+        timelines.filter(pl.col("KIND").is_in(["diagnosis", "dementia_code"]))
+        .select("KIND", "EVENT")
+        .rows()
+    )
     assert sorted(kinds) == [
         ("dementia_code", "F02"),
         ("dementia_code", "G31"),
@@ -303,8 +338,8 @@ def test_our_events_whole_lives_or_cut_at_index(cut: bool):
     events = select_events(timelines, "ours")
     if cut:
         events = cut_at_index(events, persons)
-    # Sex at age 0 is kept; the dementia code F00 never is
-    expected = {("Female", BIRTH), ("I10", date(1990, 1, 1))}
+    # No sex token; the dementia code F00 is never kept
+    expected = {("I10", date(1990, 1, 1))}
     if not cut:
         expected |= {
             ("E11", date(2005, 1, 1)),
@@ -312,6 +347,76 @@ def test_our_events_whole_lives_or_cut_at_index(cut: bool):
             ("DEATH", date(2010, 1, 1)),
         }
     assert events_of(events, "P1") == expected
+
+
+def test_covariates_at_age_0_at_their_date_or_before_the_index_date():
+    people = [
+        person("P1", spouse_bereavement=1, spouse_bereavement_date=date(1980, 1, 1)),
+        # A loss without a date: the day before the index date
+        person("P2", education=None, children="0", child_bereavement=1),
+        person("P3", "test", education="medium"),
+        # A loss before birth cannot be true: the day before the index date
+        person(
+            "P4",
+            education="short",
+            child_bereavement=1,
+            child_bereavement_date=date(1920, 1, 1),
+        ),
+    ]
+    educations = [
+        # P1's highest level is long: its first date, not one before birth
+        ("P1", date(1920, 1, 1), "long"),
+        ("P1", date(1950, 1, 1), "medium"),
+        ("P1", date(1955, 1, 1), "long"),
+        ("P1", date(1960, 1, 1), "long"),
+        # Only a date before birth: undated, the day before the index date
+        ("P4", date(1920, 1, 1), "short"),
+        # After the index date: the day before it, so that the test person
+        # keeps it
+        ("P3", date(2005, 1, 1), "medium"),
+    ]
+    _, timelines = run(people, educations=educations)
+    covariates = timelines.filter(pl.col("KIND") == "covariate")
+    before_index = date(2000, 5, 31)
+    assert events_of(covariates, "P1") == {
+        ("BORN_1930", BIRTH),
+        ("EDUCATION_LONG", date(1955, 1, 1)),
+        ("CHILDREN_ALIVE_2", before_index),
+        ("SPOUSE_BEREAVEMENT", date(1980, 1, 1)),
+    }
+    assert events_of(covariates, "P2") == {
+        ("BORN_1930", BIRTH),
+        ("EDUCATION_UNKNOWN", before_index),
+        ("CHILDREN_ALIVE_0", before_index),
+        ("CHILD_BEREAVEMENT", before_index),
+    }
+    assert events_of(covariates, "P3") == {
+        ("BORN_1930", BIRTH),
+        ("EDUCATION_MEDIUM", before_index),
+        ("CHILDREN_ALIVE_2", before_index),
+    }
+    assert ("EDUCATION_SHORT", before_index) in events_of(covariates, "P4")
+    assert ("CHILD_BEREAVEMENT", before_index) in events_of(covariates, "P4")
+
+
+def test_kitchen_sink_is_whole_lives_with_input_only_covariates():
+    people = [person("P1", death=date(2010, 1, 1))]
+    contacts = [("P1", date(1990, 1, 1), "I10")]
+    educations = [("P1", date(1955, 1, 1), "long")]
+    persons, timelines = run(people, contacts, educations=educations)
+    whole_lives = set(select_events(timelines, "ours").rows())
+    kitchen_sink = select_events(timelines, "kitchen_sink")
+    covariates = ["Female", "BORN_1930", "EDUCATION_LONG", "CHILDREN_ALIVE_2"]
+    # Every event of whole_lives, and the covariates
+    assert whole_lives <= set(kitchen_sink.rows())
+    added = {row[3] for row in set(kitchen_sink.rows()) - whole_lives}
+    assert added == set(covariates)
+    # The covariates are left out of the losses, as padding and sex
+    vocabulary = make_vocabulary(kitchen_sink, persons, "ours", None)
+    left_out = vocabulary.filter(
+        pl.col("TOKEN").is_in(left_out_tokens(vocabulary, delphi=False))
+    )["NAME"]
+    assert set(left_out) == {"PAD", "Male", *covariates}
 
 
 # A short labels.csv, laid out as Delphi's

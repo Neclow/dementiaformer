@@ -1,5 +1,6 @@
 """Batches of timelines, built as Delphi's get_batch builds them."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass, fields
 from pathlib import Path
 
@@ -10,6 +11,7 @@ import torch
 from torch import Tensor
 from torch.utils.data import IterableDataset
 
+from src._config import COVARIATE_TOKEN_PREFIXES
 from src.training.losses import NO_EVENT
 
 # Padding: token 0, at Delphi's padding age
@@ -18,7 +20,8 @@ PADDING_AGE = -10000.0
 # Delphi's input-only tokens (ignore_tokens in its config/train_delphi.py):
 # padding, sex and lifestyle
 DELPHI_INPUT_ONLY = [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-# Ours: padding and sex
+# Ours: padding and sex, and the covariate tokens of kitchen_sink
+# (COVARIATE_TOKEN_PREFIXES)
 OUR_INPUT_ONLY = ["PAD", "Female", "Male"]
 
 
@@ -90,10 +93,16 @@ def read_timelines(folder: Path, split: str) -> Timelines:
 
 
 def left_out_tokens(vocabulary: pl.DataFrame, delphi: bool) -> list[int]:
-    """The input-only tokens, left out of the losses: padding, sex, and Delphi's lifestyle."""
+    """The input-only tokens, left out of the losses: padding, sex, Delphi's lifestyle, and kitchen_sink's covariates."""
     if delphi:
         return DELPHI_INPUT_ONLY
-    return vocabulary.filter(pl.col("NAME").is_in(OUR_INPUT_ONLY))["TOKEN"].to_list()
+    return vocabulary.filter(
+        pl.col("NAME").is_in(OUR_INPUT_ONLY)
+        | pl.any_horizontal(
+            pl.col("NAME").str.starts_with(prefix)
+            for prefix in COVARIATE_TOKEN_PREFIXES
+        )
+    )["TOKEN"].to_list()
 
 
 def get_batch(
@@ -102,6 +111,7 @@ def get_batch(
     block_size: int = 96,
     training: bool = True,
     no_event_years: float = 5,
+    input_only: Sequence[int] = (),
 ) -> Batch:
     """Delphi's get_batch, with the options Delphi trains with, and the whole records."""
     # Port of get_batch in utils.py of Delphi (commit fb72166), with
@@ -135,12 +145,17 @@ def get_batch(
         no_event_ages = (
             torch.arange(0, 36525, 365.25 * no_event_years) * torch.ones(batch, 1) + 1
         )
-    last_age = ages.max(1, keepdim=True).values
+    # The person's last token that is not input only: an input-only token (a
+    # covariate of kitchen_sink) says nothing of what happened until then, as
+    # Delphi takes the last age before it moves its lifestyle tokens
+    is_input_only = torch.isin(tokens, torch.tensor(list(input_only)))
+    last_age = ages.masked_fill(is_input_only, PADDING_AGE).max(1, keepdim=True).values
     tokens = torch.hstack([tokens, torch.full(no_event_ages.shape, NO_EVENT)])
     ages = torch.hstack([ages, no_event_ages])
-    # None after the person's last token
-    tokens = tokens.masked_fill(ages > last_age, PAD)
-    ages = ages.masked_fill(ages > last_age, PADDING_AGE)
+    # No "no event" token after it
+    after = (tokens == NO_EVENT) & (ages > last_age)
+    tokens = tokens.masked_fill(after, PAD)
+    ages = ages.masked_fill(after, PADDING_AGE)
 
     # By age, so padding comes first
     order = torch.argsort(ages, 1)
@@ -185,6 +200,7 @@ class RandomBatches(IterableDataset):
         training: bool,
         no_event_years: float,
         seed: int,
+        input_only: list[int],
     ):
         self.timelines = timelines
         self.batch_size = batch_size
@@ -192,6 +208,7 @@ class RandomBatches(IterableDataset):
         self.training = training
         self.no_event_years = no_event_years
         self.seed = seed
+        self.input_only = input_only
 
     def __iter__(self):
         # A new generator at each pass, so that every pass draws the same
@@ -208,4 +225,5 @@ class RandomBatches(IterableDataset):
                 self.block_size,
                 self.training,
                 self.no_event_years,
+                self.input_only,
             )
